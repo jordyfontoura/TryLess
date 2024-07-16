@@ -108,5 +108,6 @@
   "exclude": [
     "__tests__",
     "__examples__",
+    "dist"
   ]
 }
