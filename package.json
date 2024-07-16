@@ -1,0 +1,25 @@
+{
+  "name": "resultjs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jordyfontoura/resultjs.git"
+  },
+  "author": "jordyfontoura",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jordyfontoura/resultjs/issues"
+  },
+  "homepage": "https://github.com/jordyfontoura/resultjs#readme",
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "typescript": "^5.5.3"
+  }
+}
