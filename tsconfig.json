@@ -107,5 +107,6 @@
   },
   "exclude": [
     "__tests__",
+    "__examples__",
   ]
 }
