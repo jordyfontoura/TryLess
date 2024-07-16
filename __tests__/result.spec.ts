@@ -1,4 +1,4 @@
-import { success, error, IResult } from ".";
+import { success, error } from "../src";
 
 describe("Result", () => {
   it("should create a success result", () => {
