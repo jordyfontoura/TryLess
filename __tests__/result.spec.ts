@@ -107,11 +107,19 @@ describe("Result", () => {
     expect(value).toBeUndefined();
     expect(reason).toBeDefined();
     expect(isError).toBeTruthy();
-
-    value = (await fn(0).asResult()).orDefault(0);
-
-    expect(value).toBe(0);
-    expect(reason).toBeDefined();
-    expect(isError).toBeTruthy();
   });
+
+  it("?", async () => {
+    async function fn(n: number): Promise<number> {
+      if (n === 0) {
+        throw new Error("error");
+      }
+
+      return n * (n + 1) / 2;
+    }
+
+    const oddEven = await fn(0).asResult().andThen((value) => value % 2 ? 'odd' : 'even').orDefault('odd');
+    
+    expect(oddEven).toBe('odd');
+  })
 });
