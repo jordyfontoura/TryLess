@@ -45,7 +45,7 @@ const result = someResultFunction(1)
 ```
 Example
 ```typescript
-import { IResult, success, error, trylessFunction } from 'tryless';
+import { IResult, success, error, resultifyFunction } from 'tryless';
 
 // Example function
 const divide = (a: number, b: number): IResult<number, string> => {
@@ -64,17 +64,17 @@ console.log(result); // Output: 10
 ```
 
 ### Asynchronous Functions
-You can convert async functions to return results using trylessAsyncFunction.
+You can convert async functions to return results using resultifyAsyncFunction.
 
 ```typescript
-import { trylessAsyncFunction } from 'tryless';
+import { resultifyAsyncFunction } from 'tryless';
 
 const asyncFunction = async (x: number): Promise<number> => {
   if (x < 0) throw new Error('Negative value');
   return x + 1;
 };
 
-const resultifiedFunction = trylessAsyncFunction(asyncFunction);
+const resultifiedFunction = resultifyAsyncFunction(asyncFunction);
 
 resultifiedFunction(1).then(([value, reason, isError]) => {
   if (isError) {
@@ -86,14 +86,14 @@ resultifiedFunction(1).then(([value, reason, isError]) => {
 ```
 
 ## Promises
-You can convert promises to return results using trylessPromise or the asResult method on promises.
+You can convert promises to return results using resultifyPromise or the asResult method on promises.
 
 ```typescript
-import { trylessPromise } from 'tryless';
+import { resultifyPromise } from 'tryless';
 
 const promise = fetch('https://example.com');
 
-trylessPromise(promise).then(([value, reason, isError]) => {
+resultifyPromise(promise).then(([value, reason, isError]) => {
   if (isError) {
     console.error(reason);
   } else {
@@ -128,15 +128,15 @@ error<E, T = unknown>(error: E): IResultError<E, T>
 ```
 Creates an error result.
 ```typescript
-trylessFunction<T, E = Error, Fn extends (...args: any) => any = () => void>(fn: Fn): (...args: Parameters<Fn>) => IResult<T, E>
+resultifyFunction<T, E = Error, Fn extends (...args: any) => any = () => void>(fn: Fn): (...args: Parameters<Fn>) => IResult<T, E>
 ```
 Converts a function into a result function.
 ```typescript
-trylessAsyncFunction<T, E = Error, Fn extends (...args: any) => any = () => void>(fn: Fn): (...args: Parameters<Fn>) => Promise<IResult<T, E>>
+resultifyAsyncFunction<T, E = Error, Fn extends (...args: any) => any = () => void>(fn: Fn): (...args: Parameters<Fn>) => Promise<IResult<T, E>>
 ```
 Converts an async function into a result async function.
 ```typescript
-trylessPromise<T, E = Error>(promise: Promise<T>): Promise<IResult<T, E>>
+resultifyPromise<T, E = Error>(promise: Promise<T>): Promise<IResult<T, E>>
 ```
 Converts a promise into a result promise.
 
