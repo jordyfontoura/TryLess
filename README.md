@@ -1,5 +1,5 @@
-# ResultJS
-ResultJS is a TypeScript library designed to simplify error handling and reduce the need for extensive use of try-catch blocks. The library introduces a `Result` type that encapsulates both success and error states, along with a set of helper functions to streamline the handling of results.
+# Resultfy
+Resultfy is a TypeScript library designed to simplify error handling and reduce the need for extensive use of try-catch blocks. The library introduces a `Result` type that encapsulates both success and error states, along with a set of helper functions to streamline the handling of results.
 
 ## Features
 - Encapsulate success and error states in a single type
@@ -11,7 +11,7 @@ ResultJS is a TypeScript library designed to simplify error handling and reduce 
 Install the library using npm:
 
 ```bash
-npm install resultjs
+npm install resultfy
 ```
 
 ## Usage
@@ -19,7 +19,7 @@ Creating Results
 You can create success and error results using the success and error functions.
 
 ```typescript
-import { success, error } from 'resultjs';
+import { success, error } from 'resultfy';
 
 // Creating a success result
 const result = success(1);
@@ -29,7 +29,7 @@ const errResult = error('An error occurred');
 ```
 
 ## Handling Results
-ResultJS provides several utility functions to handle results:
+Resultfy provides several utility functions to handle results:
 
 orDefault(defaultValue: T): T
 orElse(fn: (error: E) => U): T | U
@@ -37,7 +37,7 @@ orThrow(message?: string): T
 andThen(fn: (value: T) => U): IResult<U, E>
 
 ```typescript
-import { someResultFunction } from 'resultjs';
+import { someResultFunction } from 'resultfy';
 
 const result = someResultFunction(1)
   .orDefault(2)
@@ -45,7 +45,7 @@ const result = someResultFunction(1)
 ```
 Example
 ```typescript
-import { IResult, success, error, resultifyFunction } from 'resultjs';
+import { IResult, success, error, resultifyFunction } from 'resultfy';
 
 // Example function
 const divide = (a: number, b: number): IResult<number, string> => {
@@ -67,7 +67,7 @@ console.log(result); // Output: 10
 You can convert async functions to return results using resultifyAsyncFunction.
 
 ```typescript
-import { resultifyAsyncFunction } from 'resultjs';
+import { resultifyAsyncFunction } from 'resultfy';
 
 const asyncFunction = async (x: number): Promise<number> => {
   if (x < 0) throw new Error('Negative value');
@@ -89,7 +89,7 @@ resultifiedFunction(1).then(([value, reason, isError]) => {
 You can convert promises to return results using resultifyPromise or the asResult method on promises.
 
 ```typescript
-import { resultifyPromise } from 'resultjs';
+import { resultifyPromise } from 'resultfy';
 
 const promise = fetch('https://example.com');
 

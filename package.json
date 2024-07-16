@@ -1,7 +1,7 @@
 {
-  "name": "resultjs",
+  "name": "resultfy",
   "version": "1.0.0",
-  "description": "",
+  "description": "A simple Result type for TypeScript. Inspired by Rust's Result type.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -10,16 +10,24 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jordyfontoura/resultjs.git"
+    "url": "git+https://github.com/jordyfontoura/resultfy.git"
   },
   "author": "jordyfontoura",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jordyfontoura/resultjs/issues"
+    "url": "https://github.com/jordyfontoura/resultfy/issues"
   },
-  "homepage": "https://github.com/jordyfontoura/resultjs#readme",
+  "homepage": "https://github.com/jordyfontoura/resultfy#readme",
   "devDependencies": {
     "@types/node": "^20.14.10",
     "typescript": "^5.5.3"
-  }
+  },
+  "keywords": [
+    "result",
+    "error",
+    "error-handling",
+    "typed-error",
+    "rust",
+    "typescript"
+  ]
 }
