@@ -1,5 +1,5 @@
 {
-  "name": "resultfy",
+  "name": "tryless",
   "version": "1.0.0",
   "description": "A simple Result type for TypeScript. Inspired by Rust's Result type.",
   "main": "dist/index.js",
@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jordyfontoura/resultfy.git"
+    "url": "git+https://github.com/jordyfontoura/tryless.git"
   },
   "author": "jordyfontoura",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jordyfontoura/resultfy/issues"
+    "url": "https://github.com/jordyfontoura/tryless/issues"
   },
-  "homepage": "https://github.com/jordyfontoura/resultfy#readme",
+  "homepage": "https://github.com/jordyfontoura/tryless#readme",
   "devDependencies": {
     "@types/node": "^20.14.10",
     "typescript": "^5.5.3"
