@@ -42,7 +42,7 @@ async function getBitcoinPrice(): Future<number, string> {
 
   const price = json?.btc?.usd;
 
-  if (!price) {
+  if (typeof price !== 'number') {
     return fail('Invalid JSON structure');
   }
 
