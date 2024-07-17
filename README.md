@@ -24,8 +24,8 @@ import { success, error } from 'tryless';
 // Creating a success result
 const result = success(1);
 
-// Creating an error result
-const errResult = error('An error occurred');
+// Creating an fail result
+const errResult = fail('An error occurred');
 ```
 
 ## Handling Results
