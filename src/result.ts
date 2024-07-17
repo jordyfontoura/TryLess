@@ -3,19 +3,9 @@ export type IResultData<T, E, K> = [T, E, K];
 export interface IResultOps<T, E> {
   orDefault: (defaultValue: T) => T;
   orElse: <U = T>(fn: (error: E) => U) => T | U;
-  orThrow: (message?: string) => T;
+  orThrow: <E=string>(error?: E) => T;
   andThen: <U>(fn: (value: T) => U) => Result<U, E>;
 }
-
-export interface IResultAsyncOps<T, E> {
-  orDefault: (defaultValue: T) => Promise<T>;
-  orElse: <U = T>(fn: (error: E) => U | PromiseLike<U>) => Promise<T | U>;
-  orThrow: (message?: string) => Promise<T>;
-  andThen: <U>(fn: (value: T) => U) => IResultPromise<U, E>;
-}
-
-export type IResultPromise<T, E> = Promise<Result<T, E>> &
-  IResultAsyncOps<T, E>;
 
 /**
  * Result type that contains a value, an error and a boolean indicating if it's an error
@@ -50,7 +40,7 @@ export function createResult<T, E>(value: T, error: E): Result<T, E> {
     andThen,
   };
 
-  if (error) {
+  if (error !== undefined) {
     result = Object.assign([undefined, error, true], ops) as Result<T, E>;
   } else {
     result = Object.assign([value, undefined, false], ops) as Result<T, E>;
@@ -74,12 +64,16 @@ export function createResult<T, E>(value: T, error: E): Result<T, E> {
     return value;
   }
 
-  function orThrow(message?: string): T {
-    if (error) {
-      throw new Error(message || String(error));
+  function orThrow<E=string>(err?: E): T {
+    if (error === undefined) {
+      return value;
     }
 
-    return value;
+    if (err !== undefined) {
+      throw err;
+    }
+
+    throw error;
   }
 
   function andThen<U>(

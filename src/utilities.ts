@@ -1,4 +1,5 @@
-import { error, Result, IResultPromise, success } from "./result";
+import { Future } from "./future";
+import { error, Result, success } from "./result";
 
 /**
  * Converts an async function into a result async function
@@ -47,49 +48,3 @@ export function resultifyPromise<T, E = Error>(
   return promise.then(success, error) as Promise<Result<T, E>>;
 }
 
-
-export function promiseAsResult<
-  T = unknown,
-  E = Error
->(promise: Promise<T>): IResultPromise<T, E> {
-  const resultPromise = promise.then(
-    success,
-    error
-  ) as Promise<Result<T, E>>;
-
-  return promiseResultAsResultPromise<T, E>(resultPromise);
-};
-
-export function promiseResultAsResultPromise<T, E = Error>(
-  promise: Promise<Result<T, E>>,
-): IResultPromise<T, E> {
-  const finalPromise = Object.assign(promise, {
-    orDefault,
-    orElse,
-    orThrow,
-    andThen,
-  }) as IResultPromise<T, E>;
-
-  return finalPromise;
-
-  async function orDefault(defaultValue: T): Promise<T> {
-    const result = await promise;
-    return result.orDefault(defaultValue);
-  }
-
-  async function orElse<U = T>(fn: (error: E) => U | PromiseLike<U>): Promise<T | U> {
-    const result = await promise;
-    return result.orElse(fn);
-  }
-
-  async function orThrow(message?: string): Promise<T> {
-    const result = await promise;
-    return result.orThrow(message);
-  }
-
-  function andThen<U>(fn: (value: T) => U): IResultPromise<U, E> {
-    const newPromise = promise.then((result) => result.andThen(fn)) as IResultPromise<U, E>;
-
-    return promiseResultAsResultPromise(newPromise);
-  }
-}

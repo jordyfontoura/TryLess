@@ -1,4 +1,6 @@
 import { success, error } from "../src";
+import { Future } from "../src/future";
+import {} from "../src/extensios";
 
 describe("Result", () => {
   it("should create a success result", () => {
@@ -55,20 +57,20 @@ describe("Result", () => {
 
   it("should map the value", () => {
     const result = success(1);
-    const mapped = result.andThen((value) => value + 1);
+    const [value, reason, isError] = result.andThen((value) => value + 1);
 
-    expect(mapped[0]).toBe(2);
-    expect(mapped[1]).toBeUndefined();
-    expect(mapped[2]).toBeFalsy();
+    expect(value).toBe(2);
+    expect(reason).toBeUndefined();
+    expect(isError).toBeFalsy();
   });
 
   it("should map the error", () => {
     const result = error<string, number>("error");
-    const mapped = result.andThen((value) => value + 1);
+    const [value, reason, isError] = result.andThen((value) => value + 1);
 
-    expect(mapped[0]).toBeUndefined();
-    expect(mapped[1]).toBe("error");
-    expect(mapped[2]).toBeTruthy();
+    expect(value).toBeUndefined();
+    expect(reason).toBe("error");
+    expect(isError).toBeTruthy();
   });
 
   it("should create a random result", () => {
@@ -109,17 +111,107 @@ describe("Result", () => {
     expect(isError).toBeTruthy();
   });
 
-  it("?", async () => {
+  it("should turn promise into result with default value", async () => {
     async function fn(n: number): Promise<number> {
       if (n === 0) {
         throw new Error("error");
       }
 
-      return n * (n + 1) / 2;
+      return 17 / n;
     }
 
-    const oddEven = await fn(0).asResult().andThen((value) => value % 2 ? 'odd' : 'even').orDefault('odd');
-    
-    expect(oddEven).toBe('odd');
-  })
+    let value = await fn(2).asResult().orDefault(0);
+
+    expect(value).toBe(8.5);
+
+    value = await fn(0).asResult().orDefault(0);
+
+    expect(value).toBe(0);
+  });
+
+  it("should turn promise into result with error handler", async () => {
+    async function fn(n: number): Promise<number> {
+      if (n === 0) {
+        throw new Error("error");
+      }
+
+      return 17 / n;
+    }
+
+    let value = await fn(2)
+      .asResult()
+      .orElse(() => 0);
+
+    expect(value).toBe(8.5);
+
+    value = await fn(0)
+      .asResult()
+      .orElse(() => 0);
+
+    expect(value).toBe(0);
+  });
+
+  it("should turn promise into result with error handler", async () => {
+    async function fn(n: number): Promise<number> {
+      if (n === 0) {
+        throw new Error("error");
+      }
+
+      return 17 / n;
+    }
+
+    let value = await fn(2).asResult().orThrow();
+
+    expect(value).toBe(8.5);
+
+    try {
+      await fn(0).asResult().orThrow();
+    } catch (err) {
+      expect(err).toStrictEqual(new Error("error"));
+    }
+  });
+
+  it("should turn promise into result with value mapping", async () => {
+    async function fn(n: number): Promise<number> {
+      if (n === 0) {
+        throw new Error("error");
+      }
+
+      return 17 / n;
+    }
+
+    let [value, reason, isError] = await fn(2)
+      .asResult()
+      .andThen((v) => v + 1);
+
+    expect(value).toBe(9.5);
+    expect(reason).toBeUndefined();
+    expect(isError).toBeFalsy();
+
+    [value, reason, isError] = await fn(0)
+      .asResult()
+      .andThen((v) => v + 1);
+
+    expect(value).toBeUndefined();
+    expect(reason).toBeDefined();
+    expect(isError).toBeTruthy();
+  });
+
+  it("should return 8.5 for non-zero inputs and 0 for zero input", async () => {
+    async function fn(n: number): Future<number, string> {
+      if (n === 0) {
+        return error("Cannot divide by zero");
+      }
+
+      return success(17 / n);
+    }
+
+    let value = await fn(2).orDefault(0);
+
+    expect(value).toBe(8.5);
+
+    value = await fn(0).orDefault(0);
+
+    expect(value).toBe(0);
+  });
 });
