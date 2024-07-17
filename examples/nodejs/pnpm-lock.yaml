@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       tryless:
-        specifier: ^1.0.2
-        version: 1.0.2
+        specifier: ^1.0.3
+        version: 1.0.3
 
 packages:
 
-  tryless@1.0.2:
-    resolution: {integrity: sha512-PdXkAlvP0vkC0jb2etEdYgygWuyZIq4RddEs6PUPMF0oPkCRBf1AktRbbej7TI9NSUfnpMk9RmMXqX0my1LmVA==}
+  tryless@1.0.3:
+    resolution: {integrity: sha512-V1zdCzcf/QGbh7rrwh7F5OLs4bUG8s+nggFzQJufOPgqM8W+OaxXEnIGiwqj9hfehLNM9a8rgX0Mgzt2CfqGVg==}
 
 snapshots:
 
-  tryless@1.0.2: {}
+  tryless@1.0.3: {}
