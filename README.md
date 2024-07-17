@@ -128,15 +128,15 @@ error<E, T = unknown>(error: E): IResultError<E, T>
 ```
 Creates an error result.
 ```typescript
-resultifyFunction<T, E = Error, Fn extends (...args: any) => any = () => void>(fn: Fn): (...args: Parameters<Fn>) => IResult<T, E>
+resultifyFunction<T, E = unknown, Fn extends (...args: any) => any = () => void>(fn: Fn): (...args: Parameters<Fn>) => IResult<T, E>
 ```
 Converts a function into a result function.
 ```typescript
-resultifyAsyncFunction<T, E = Error, Fn extends (...args: any) => any = () => void>(fn: Fn): (...args: Parameters<Fn>) => Promise<IResult<T, E>>
+resultifyAsyncFunction<T, E = unknown, Fn extends (...args: any) => any = () => void>(fn: Fn): (...args: Parameters<Fn>) => Promise<IResult<T, E>>
 ```
 Converts an async function into a result async function.
 ```typescript
-resultifyPromise<T, E = Error>(promise: Promise<T>): Promise<IResult<T, E>>
+resultifyPromise<T, E = unknown>(promise: Promise<T>): Promise<IResult<T, E>>
 ```
 Converts a promise into a result promise.
 

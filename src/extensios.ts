@@ -21,7 +21,7 @@ declare global {
      *
      * console.log(value);
      */
-    asResult: T extends Result<any, any> ? never : <U = T, E = Error>() => Future<U, E>;
+    asResult: T extends Result<any, any> ? never : <U = T, E = unknown>() => Future<U, E>;
 
     /**
      * Returns a new promise that resolves to the value of the original promise, or a default value if the original promise resolves to an error.
@@ -53,7 +53,7 @@ declare global {
   }
 }
 
-Promise.prototype.asResult = function asResult<T = unknown, E = Error>(): Future<T, E> {
+Promise.prototype.asResult = function asResult<T = unknown, E = unknown>(): Future<T, E> {
   return resultifyPromise(this);
 }
 

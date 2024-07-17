@@ -9,7 +9,7 @@ import { error, Result, success } from "./result";
  * const fn = resultifyAsyncFunction(async (x) => x + 1);
  * const [value, reason, isError] = await fn(1);
  */
-export function resultifyAsyncFunction<T, E = Error, Fn extends (...args: any) => any = () => void>(
+export function resultifyAsyncFunction<T, E = unknown, Fn extends (...args: any) => any = () => void>(
   fn: Fn,
 ): (...args: Parameters<Fn>) => Promise<Result<T, E>> {
   return (...args) => fn(...args).then(success, error) as Promise<Result<T, E>>;
@@ -23,7 +23,7 @@ export function resultifyAsyncFunction<T, E = Error, Fn extends (...args: any) =
  * const fn = resultifyFunction((x) => x + 1);
  * const [value, reason, isError] = fn(1);
  */
-export function resultifyFunction<T, E = Error, Fn extends (...args: any) => any = () => void>(
+export function resultifyFunction<T, E = unknown, Fn extends (...args: any) => any = () => void>(
   fn: Fn,
 ): (...args: Parameters<Fn>) => Result<T, E> {
   return (...args) => {
@@ -42,7 +42,7 @@ export function resultifyFunction<T, E = Error, Fn extends (...args: any) => any
  * @example
  * const [value, reason, isError] = await resultifyPromise(fetch("https://example.com"));
  */
-export function resultifyPromise<T, E = Error>(
+export function resultifyPromise<T, E = unknown>(
   promise: Promise<T>,
 ): Promise<Result<T, E>> {
   return promise.then(success, error) as Promise<Result<T, E>>;
