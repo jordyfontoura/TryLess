@@ -1,4 +1,4 @@
-import { error, IResult, IResultPromise, success } from "./result";
+import { error, Result, IResultPromise, success } from "./result";
 
 /**
  * Converts an async function into a result async function
@@ -10,8 +10,8 @@ import { error, IResult, IResultPromise, success } from "./result";
  */
 export function resultifyAsyncFunction<T, E = Error, Fn extends (...args: any) => any = () => void>(
   fn: Fn,
-): (...args: Parameters<Fn>) => Promise<IResult<T, E>> {
-  return (...args) => fn(...args).then(success, error) as Promise<IResult<T, E>>;
+): (...args: Parameters<Fn>) => Promise<Result<T, E>> {
+  return (...args) => fn(...args).then(success, error) as Promise<Result<T, E>>;
 }
 
 /**
@@ -24,12 +24,12 @@ export function resultifyAsyncFunction<T, E = Error, Fn extends (...args: any) =
  */
 export function resultifyFunction<T, E = Error, Fn extends (...args: any) => any = () => void>(
   fn: Fn,
-): (...args: Parameters<Fn>) => IResult<T, E> {
+): (...args: Parameters<Fn>) => Result<T, E> {
   return (...args) => {
     try {
       return success(fn(...args));
     } catch (err) {
-      return error(err) as IResult<T, E>;
+      return error(err) as Result<T, E>;
     }
   };
 }
@@ -43,8 +43,8 @@ export function resultifyFunction<T, E = Error, Fn extends (...args: any) => any
  */
 export function resultifyPromise<T, E = Error>(
   promise: Promise<T>,
-): Promise<IResult<T, E>> {
-  return promise.then(success, error) as Promise<IResult<T, E>>;
+): Promise<Result<T, E>> {
+  return promise.then(success, error) as Promise<Result<T, E>>;
 }
 
 
@@ -55,13 +55,13 @@ export function promiseAsResult<
   const resultPromise = promise.then(
     success,
     error
-  ) as Promise<IResult<T, E>>;
+  ) as Promise<Result<T, E>>;
 
   return promiseResultAsResultPromise<T, E>(resultPromise);
 };
 
 export function promiseResultAsResultPromise<T, E = Error>(
-  promise: Promise<IResult<T, E>>,
+  promise: Promise<Result<T, E>>,
 ): IResultPromise<T, E> {
   const finalPromise = Object.assign(promise, {
     orDefault,

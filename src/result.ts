@@ -4,7 +4,7 @@ export interface IResultOps<T, E> {
   orDefault: (defaultValue: T) => T;
   orElse: <U = T>(fn: (error: E) => U) => T | U;
   orThrow: (message?: string) => T;
-  andThen: <U>(fn: (value: T) => U) => IResult<U, E>;
+  andThen: <U>(fn: (value: T) => U) => Result<U, E>;
 }
 
 export interface IResultAsyncOps<T, E> {
@@ -14,7 +14,7 @@ export interface IResultAsyncOps<T, E> {
   andThen: <U>(fn: (value: T) => U) => IResultPromise<U, E>;
 }
 
-export type IResultPromise<T, E> = Promise<IResult<T, E>> &
+export type IResultPromise<T, E> = Promise<Result<T, E>> &
   IResultAsyncOps<T, E>;
 
 /**
@@ -25,7 +25,7 @@ export type IResultPromise<T, E> = Promise<IResult<T, E>> &
  * @example
  * const value = someResultFunction(1).orDefault(2).andThen((value) => value + 1);
  */
-export type IResult<T, E> = (
+export type Result<T, E> = (
   | IResultData<T, undefined, false>
   | IResultData<undefined, E, true>
 ) &
@@ -41,8 +41,8 @@ export function createResult<T, E>(
   value: T,
   error: undefined
 ): IResultSuccess<T>;
-export function createResult<T, E>(value: T, error: E): IResult<T, E> {
-  let result: IResult<T, E>;
+export function createResult<T, E>(value: T, error: E): Result<T, E> {
+  let result: Result<T, E>;
   const ops: IResultOps<T, E> = {
     orDefault,
     orElse,
@@ -51,9 +51,9 @@ export function createResult<T, E>(value: T, error: E): IResult<T, E> {
   };
 
   if (error) {
-    result = Object.assign([undefined, error, true], ops) as IResult<T, E>;
+    result = Object.assign([undefined, error, true], ops) as Result<T, E>;
   } else {
-    result = Object.assign([value, undefined, false], ops) as IResult<T, E>;
+    result = Object.assign([value, undefined, false], ops) as Result<T, E>;
   }
 
   return result;
