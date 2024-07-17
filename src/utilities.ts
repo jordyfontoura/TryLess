@@ -1,5 +1,5 @@
 import { Future } from "./future";
-import { error, Result, success } from "./result";
+import { fail, Result, success } from "./result";
 
 /**
  * Converts an async function into a result async function
@@ -11,8 +11,8 @@ import { error, Result, success } from "./result";
  */
 export function resultifyAsyncFunction<T, E = unknown, Fn extends (...args: any) => any = () => void>(
   fn: Fn,
-): (...args: Parameters<Fn>) => Promise<Result<T, E>> {
-  return (...args) => fn(...args).then(success, error) as Promise<Result<T, E>>;
+): (...args: Parameters<Fn>) => Future<T, E> {
+  return (...args) => fn(...args).then(success, fail);
 }
 
 /**
@@ -30,7 +30,7 @@ export function resultifyFunction<T, E = unknown, Fn extends (...args: any) => a
     try {
       return success(fn(...args));
     } catch (err) {
-      return error(err) as Result<T, E>;
+      return fail(err) as Result<T, E>;
     }
   };
 }
@@ -44,7 +44,7 @@ export function resultifyFunction<T, E = unknown, Fn extends (...args: any) => a
  */
 export function resultifyPromise<T, E = unknown>(
   promise: Promise<T>,
-): Promise<Result<T, E>> {
-  return promise.then(success, error) as Promise<Result<T, E>>;
+): Future<T, E> {
+  return promise.then(success, fail) as Future<T, E>;
 }
 

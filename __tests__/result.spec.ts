@@ -1,4 +1,4 @@
-import { success, error } from "../src";
+import { success, fail } from "../src";
 import { Future } from "../src/future";
 import {} from "../src/extensios";
 
@@ -12,7 +12,7 @@ describe("Result", () => {
   });
 
   it("should create an error result", () => {
-    const [value, reason, isError] = error("error");
+    const [value, reason, isError] = fail("error");
 
     expect(value).toBeUndefined();
     expect(reason).toBe("error");
@@ -26,7 +26,7 @@ describe("Result", () => {
   });
 
   it("should return the default value", () => {
-    const result = error("error");
+    const result = fail("error");
 
     expect(result.orDefault(2)).toBe(2);
   });
@@ -38,19 +38,19 @@ describe("Result", () => {
   });
 
   it("should return the default value", () => {
-    const result = error("error");
+    const result = fail("error");
 
     expect(result.orElse(() => 2)).toBe(2);
   });
 
   it("should throw an error", () => {
-    const result = error("error");
+    const result = fail("error");
 
     expect(() => result.orThrow()).toThrow("error");
   });
 
   it("should throw an error with custom message", () => {
-    const result = error("error");
+    const result = fail("error");
 
     expect(() => result.orThrow("custom")).toThrow("custom");
   });
@@ -65,7 +65,7 @@ describe("Result", () => {
   });
 
   it("should map the error", () => {
-    const result = error<string, number>("error");
+    const result = fail<string, number>("error");
     const [value, reason, isError] = result.andThen((value) => value + 1);
 
     expect(value).toBeUndefined();
@@ -75,7 +75,7 @@ describe("Result", () => {
 
   it("should create a random result", () => {
     const [value, reason, isError] =
-      Math.random() > 0.5 ? success(1) : error("error");
+      Math.random() > 0.5 ? success(1) : fail("error");
 
     if (isError) {
       expect(value).toBeUndefined();
@@ -200,7 +200,7 @@ describe("Result", () => {
   it("should return 8.5 for non-zero inputs and 0 for zero input", async () => {
     async function fn(n: number): Future<number, string> {
       if (n === 0) {
-        return error("Cannot divide by zero");
+        return fail("Cannot divide by zero");
       }
 
       return success(17 / n);

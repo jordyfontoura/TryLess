@@ -99,12 +99,12 @@ export function success<T, E = unknown>(value: T): IResultSuccess<T, E> {
 }
 
 /**
- * Creates an error result
+ * Creates an failed result
  * @param error Error to be wrapped
- * @returns An error result
+ * @returns An failed result
  * @example
  * const [value, reason, isError] = error("error");
  */
-export function error<E, T = unknown>(error: E): IResultError<E, T> {
+export function fail<E, T = unknown>(error: E): IResultError<E, T> {
   return createResult<T, E>(undefined, error) as IResultError<E, T>;
 }

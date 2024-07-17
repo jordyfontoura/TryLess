@@ -45,12 +45,12 @@ const result = someResultFunction(1)
 ```
 Example
 ```typescript
-import { IResult, success, error, resultifyFunction } from 'tryless';
+import { IResult, success, fail, resultifyFunction } from 'tryless';
 
 // Example function
 const divide = (a: number, b: number): IResult<number, string> => {
   if (b === 0) {
-    return error('Division by zero');
+    return fail('Division by zero');
   }
   return success(a / b);
 };
