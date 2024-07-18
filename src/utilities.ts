@@ -9,6 +9,7 @@ import { fail, Result, success } from "./result";
  * const fn = resultifyAsyncFunction(async (x) => x + 1);
  * const [value, reason, isError] = await fn(1);
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function resultifyAsyncFunction<T, E = unknown, Fn extends (...args: any) => any = () => void>(
   fn: Fn,
 ): (...args: Parameters<Fn>) => Future<T, E> {
@@ -23,6 +24,7 @@ export function resultifyAsyncFunction<T, E = unknown, Fn extends (...args: any)
  * const fn = resultifyFunction((x) => x + 1);
  * const [value, reason, isError] = fn(1);
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function resultifyFunction<T, E = unknown, Fn extends (...args: any) => any = () => void>(
   fn: Fn,
 ): (...args: Parameters<Fn>) => Result<T, E> {

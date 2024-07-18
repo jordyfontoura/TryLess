@@ -26,8 +26,8 @@ export type IResultSuccess<T, E = unknown> = IResultData<T, undefined, false> &
 export type IResultError<E, T = unknown> = IResultData<undefined, E, true> &
   IResultOps<T, E>;
 
-export function createResult<T, E>(value: undefined, error: E): IResultError<E>;
-export function createResult<T, E>(
+export function createResult<E>(value: undefined, error: E): IResultError<E>;
+export function createResult<T>(
   value: T,
   error: undefined
 ): IResultSuccess<T>;
@@ -95,7 +95,7 @@ export function createResult<T, E>(value: T, error: E): Result<T, E> {
  * const [value, reason, isError] = success(1);
  */
 export function success<T, E = unknown>(value: T): IResultSuccess<T, E> {
-  return createResult<T, E>(value, undefined) as IResultSuccess<T, E>;
+  return createResult<T>(value, undefined) as IResultSuccess<T, E>;
 }
 
 /**
@@ -106,5 +106,5 @@ export function success<T, E = unknown>(value: T): IResultSuccess<T, E> {
  * const [value, reason, isError] = fail("error");
  */
 export function fail<E, T = unknown>(error: E): IResultError<E, T> {
-  return createResult<T, E>(undefined, error) as IResultError<E, T>;
+  return createResult<E>(undefined, error) as IResultError<E, T>;
 }

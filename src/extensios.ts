@@ -21,6 +21,7 @@ declare global {
      *
      * console.log(value);
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     asResult: T extends Result<any, any> ? never : <U = T, E = unknown>() => Future<U, E>;
 
     /**
@@ -28,6 +29,7 @@ declare global {
      * @param defaultValue - The default value to return if the original promise resolves to an error.
      * @returns A new promise that resolves to the value of the original promise, or the default value if the original promise resolves to an error.
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     orDefault: T extends Result<infer X, any> ? <U = X>(defaultValue: U) => Promise<X | U> : never;
 
     /**
@@ -35,6 +37,7 @@ declare global {
      * @param fn - The function to handle the error. It takes the error as a parameter and returns a value.
      * @returns A new promise that resolves to the value of the original promise, or the result of applying the function to handle the error.
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     orElse: T extends Result<any, infer Y> ? <U>(fn: (error: Y) => U) => Promise<U> : never;
 
     /**
@@ -42,7 +45,7 @@ declare global {
      * @param message - The message to include in the error if the original promise resolves to an error.
      * @returns The value of the original promise if it resolves to a value.
      */
-    orThrow: T extends Result<infer X, infer Y> ? <E extends Object>(error?: E | ((e: Y) => E)) => Promise<X> : never;
+    orThrow: T extends Result<infer X, infer Y> ? <E extends NonNullable<unknown>>(error?: E | ((e: Y) => E)) => Promise<X> : never;
 
     /**
      * Returns a new promise that resolves to the result of applying a function to the value of the original promise.
@@ -77,7 +80,7 @@ Promise.prototype.orElse = async function orElse<T, U>(fn: (error: T) => U): Pro
   return result;
 }
 
-Promise.prototype.orThrow = async function orThrow<T, E extends Object=string>(err?: E | ((e: any) => E)): Promise<T> {
+Promise.prototype.orThrow = async function orThrow<T, E extends NonNullable<unknown>=string>(err?: E | ((e: unknown) => E)): Promise<T> {
   const [value, reason, isError] = await this;
 
   if (!isError) {
@@ -85,7 +88,7 @@ Promise.prototype.orThrow = async function orThrow<T, E extends Object=string>(e
   }
 
   if (typeof err === 'function') {
-    throw err(reason);
+    throw (err as (e: unknown) => E)(reason);
   }
 
   throw reason;

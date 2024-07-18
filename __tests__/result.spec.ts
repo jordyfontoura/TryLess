@@ -160,7 +160,7 @@ describe("Result", () => {
       return 17 / n;
     }
 
-    let value = await fn(2).asResult().orThrow();
+    const value = await fn(2).asResult().orThrow();
 
     expect(value).toBe(8.5);
 
