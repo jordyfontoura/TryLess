@@ -1,9 +1,9 @@
 import { success, fail } from "../src";
 import { Future } from "../src/future";
 import {} from "../src/extensios";
+import { assertType } from "./testing";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function assertType<T>(_value: T) {}
+
 
 describe("Result", () => {
   it("should create a success result", () => {
