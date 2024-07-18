@@ -1,4 +1,4 @@
-import { success, fail } from "../src";
+import { ok, fail } from "../src";
 import { Future } from "../src/future";
 import {} from "../src/extensios";
 import { assertType } from "./testing";
@@ -7,7 +7,7 @@ import { assertType } from "./testing";
 
 describe("Result", () => {
   it("should create a success result", () => {
-    const [value, reason, isError] = success(1);
+    const [value, reason, isError] = ok(1);
 
     expect(value).toBe(1);
     expect(reason).toBeUndefined();
@@ -23,7 +23,7 @@ describe("Result", () => {
   });
 
   it("should not return the default value", () => {
-    const result = success(1);
+    const result = ok(1);
 
     expect(result.orDefault(2)).toBe(1);
   });
@@ -35,7 +35,7 @@ describe("Result", () => {
   });
 
   it("should return the value", () => {
-    const result = success(1);
+    const result = ok(1);
 
     expect(result.orElse(() => 2)).toBe(1);
   });
@@ -96,7 +96,7 @@ describe("Result", () => {
 
   it("should create a random result", () => {
     const [value, reason, isError] =
-      Math.random() > 0.5 ? success(1) : fail("error");
+      Math.random() > 0.5 ? ok(1) : fail("error");
 
     assertType<number | undefined>(value);
     assertType<string | undefined>(reason);
@@ -236,7 +236,7 @@ describe("Result", () => {
         return fail("Cannot divide by zero");
       }
 
-      return success(17 / n);
+      return ok(17 / n);
     }
 
     let value = await fn(2).orDefault(0);

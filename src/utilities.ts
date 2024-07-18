@@ -1,5 +1,5 @@
 import { Future } from "./future";
-import { fail, Result, success } from "./result";
+import { fail, Result, ok } from "./result";
 
 /**
  * Converts an async function into a result async function
@@ -13,7 +13,7 @@ export function resultifyAsyncFunction<T, E=unknown>(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fn: (...args: any) => Promise<T>,
 ): (...args: Parameters<typeof fn>) => Future<T, E> {
-  return (...args) => fn(...args).then(success, fail) as Future<T, E>;
+  return (...args) => fn(...args).then(ok, fail) as Future<T, E>;
 }
 
 /**
@@ -30,7 +30,7 @@ export function resultifyFunction<T, E = unknown>(
 ): (...args: Parameters<typeof fn>) => Result<T, E> {
   return (...args) => {
     try {
-      return success(fn(...args));
+      return ok(fn(...args));
     } catch (err) {
       return fail(err) as Result<T, E>;
     }
@@ -47,6 +47,6 @@ export function resultifyFunction<T, E = unknown>(
 export function resultifyPromise<T, E = unknown>(
   promise: Promise<T>,
 ): Future<T, E> {
-  return promise.then(success, fail) as Future<T, E>;
+  return promise.then(ok, fail) as Future<T, E>;
 }
 

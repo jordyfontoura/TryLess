@@ -21,16 +21,16 @@ export type Result<T, E> = (
 ) &
   IResultOps<T, E>;
 
-export type IResultSuccess<T, E = unknown> = IResultData<T, undefined, false> &
+export type IResultOk<T, E = unknown> = IResultData<T, undefined, false> &
   IResultOps<T, E>;
-export type IResultError<E, T = unknown> = IResultData<undefined, E, true> &
+export type IResultFail<E, T = unknown> = IResultData<undefined, E, true> &
   IResultOps<T, E>;
 
-export function createResult<E>(value: undefined, error: E): IResultError<E>;
+export function createResult<E>(value: undefined, error: E): IResultFail<E>;
 export function createResult<T>(
   value: T,
   error: undefined
-): IResultSuccess<T>;
+): IResultOk<T>;
 export function createResult<T, E>(value: T, error: E): Result<T, E> {
   let result: Result<T, E>;
   const ops: IResultOps<T, E> = {
@@ -78,12 +78,12 @@ export function createResult<T, E>(value: T, error: E): Result<T, E> {
 
   function andThen<U>(
     fn: (value: T) => U
-  ): IResultSuccess<U, E> | IResultError<E, U> {
+  ): IResultOk<U, E> | IResultFail<E, U> {
     if (error !== undefined) {
-      return result as unknown as IResultError<E, U>;
+      return result as unknown as IResultFail<E, U>;
     }
 
-    return success(fn(value)) as IResultSuccess<U, E>;
+    return ok(fn(value)) as IResultOk<U, E>;
   }
 }
 
@@ -92,10 +92,10 @@ export function createResult<T, E>(value: T, error: E): Result<T, E> {
  * @param value Value to be wrapped
  * @returns A successful result
  * @example
- * const [value, reason, isError] = success(1);
+ * const [value, reason, isError] = ok(1);
  */
-export function success<T, E = unknown>(value: T): IResultSuccess<T, E> {
-  return createResult<T>(value, undefined) as IResultSuccess<T, E>;
+export function ok<T, E = unknown>(value: T): IResultOk<T, E> {
+  return createResult<T>(value, undefined) as IResultOk<T, E>;
 }
 
 /**
@@ -105,6 +105,6 @@ export function success<T, E = unknown>(value: T): IResultSuccess<T, E> {
  * @example
  * const [value, reason, isError] = fail("error");
  */
-export function fail<E, T = unknown>(error: E): IResultError<E, T> {
-  return createResult<E>(undefined, error) as IResultError<E, T>;
+export function fail<E, T = unknown>(error: E): IResultFail<E, T> {
+  return createResult<E>(undefined, error) as IResultFail<E, T>;
 }

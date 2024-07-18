@@ -1,4 +1,4 @@
-import {fail, success} from 'tryless'
+import {fail, ok} from 'tryless'
 
 async function getHttpImage(code) {
   if (typeof code !== 'number') {
@@ -20,7 +20,7 @@ async function getHttpImage(code) {
     return fail(`HTTP CODE ${code} error! status: ${response.status}`);
   }
   
-  return success(url);
+  return ok(url);
 }
 
 async function main() {
