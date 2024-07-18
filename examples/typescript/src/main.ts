@@ -1,4 +1,4 @@
-import {fail, Future, success} from 'tryless';
+import {fail, Future, ok, Result} from 'tryless';
 
 
 const apiURL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/btc.json';
@@ -46,7 +46,7 @@ async function getBitcoinPrice(): Future<number, string> {
     return fail('Invalid JSON structure');
   }
 
-  return success(price);
+  return ok(price);
 }
 
 async function main() {

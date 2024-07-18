@@ -1,4 +1,4 @@
-import { Future, success, fail, Result } from "../src";
+import { Future, ok, fail, Result } from "../src";
 import { assertType } from "./testing";
 
 describe("Future", () => {
@@ -15,7 +15,7 @@ describe("Future", () => {
       return fail('error');
     }
 
-    return success(20 / n);
+    return ok(20 / n);
   }
 
   it("should turn promise into future", async () => {

@@ -19,10 +19,10 @@ Creating Results
 You can create success and error results using the success and error functions.
 
 ```typescript
-import { success, error } from 'tryless';
+import { ok, error } from 'tryless';
 
 // Creating a success result
-const result = success(1);
+const result = ok(1);
 
 // Creating an fail result
 const errResult = fail('An error occurred');
@@ -45,14 +45,14 @@ const result = someResultFunction(1)
 ```
 Example
 ```typescript
-import { IResult, success, fail, resultifyFunction } from 'tryless';
+import { IResult, ok, fail, resultifyFunction } from 'tryless';
 
 // Example function
 const divide = (a: number, b: number): IResult<number, string> => {
   if (b === 0) {
     return fail('Division by zero');
   }
-  return success(a / b);
+  return ok(a / b);
 };
 
 // Handling the result
