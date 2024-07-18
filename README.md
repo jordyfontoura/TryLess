@@ -120,11 +120,11 @@ T: Type of the value
 E: Type of the error
 Functions
 ```typescript
-success<T, E = unknown>(value: T): IResultSuccess<T, E>
+ok<T, E = unknown>(value: T): ResultOk<T, E>
 ```
 Creates a successful result.
 ```typescript
-error<E, T = unknown>(error: E): IResultError<E, T>
+fail<E, T = unknown>(error: E): ResultFail<E, T>
 ```
 Creates an error result.
 ```typescript
