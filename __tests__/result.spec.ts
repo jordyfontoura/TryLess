@@ -2,6 +2,9 @@ import { success, fail } from "../src";
 import { Future } from "../src/future";
 import {} from "../src/extensios";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function assertType<T>(_value: T) {}
+
 describe("Result", () => {
   it("should create a success result", () => {
     const [value, reason, isError] = success(1);
@@ -56,10 +59,28 @@ describe("Result", () => {
   });
 
   it("should map the value", () => {
-    const result = success(1);
-    const [value, reason, isError] = result.andThen((value) => value + 1);
+    const result = success<number, string>(1);
+    const [value, reason, isError] = result.andThen((value) => value  % 2 === 0 ? 'even' : 'odd');
 
-    expect(value).toBe(2);
+    expect(isError).toBeFalsy();
+
+    if (isError) {
+      expect(value).toBeUndefined();
+      expect(reason).toBeDefined();
+      expect(isError).toBeTruthy();
+
+      assertType<string>(reason);
+      assertType<true>(isError);
+      assertType<undefined>(value);
+
+      return;
+    }
+
+    assertType<'even' | 'odd'>(value);
+    assertType<undefined>(reason);
+    assertType<false>(isError);
+
+    expect(value).toBe('odd');
     expect(reason).toBeUndefined();
     expect(isError).toBeFalsy();
   });
@@ -77,16 +98,28 @@ describe("Result", () => {
     const [value, reason, isError] =
       Math.random() > 0.5 ? success(1) : fail("error");
 
+    assertType<number | undefined>(value);
+    assertType<string | undefined>(reason);
+    assertType<boolean>(isError);
+
     if (isError) {
       expect(value).toBeUndefined();
       expect(reason).toBeDefined();
       expect(isError).toBeTruthy();
+
+      assertType<string>(reason);
+      assertType<true>(isError);
+      assertType<undefined>(value);
       return;
     }
 
     expect(value).toBe(1);
     expect(reason).toBeUndefined();
     expect(isError).toBeFalsy();
+
+    assertType<number>(value);
+    assertType<undefined>(reason);
+    assertType<false>(isError);
   });
 
   it("should turn promise into result", async () => {
