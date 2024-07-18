@@ -59,7 +59,7 @@ describe("Result", () => {
   });
 
   it("should map the value", () => {
-    const result = success<number, string>(1);
+    const result = ok<number, string>(1);
     const [value, reason, isError] = result.andThen((value) => value  % 2 === 0 ? 'even' : 'odd');
 
     expect(isError).toBeFalsy();
