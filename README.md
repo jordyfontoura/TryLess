@@ -1,147 +1,121 @@
+Here is an improved version of your README:
+
 # TryLess
-TryLess is a TypeScript library designed to simplify error handling and reduce the need for extensive use of try-catch blocks. The library introduces a `Result` type that encapsulates both success and error states, along with a set of helper functions to streamline the handling of results.
+TryLess is a TypeScript library designed to simplify error handling and minimize the use of try-catch blocks. The library introduces `Result` and `Future` types that encapsulate both success and error states, along with a set of helper functions to streamline the handling of these results.
+
+## Why Avoid Extensive Use of Try-Catch Blocks?
+While try-catch blocks are a common method for handling errors in JavaScript and TypeScript, they can make your code verbose and difficult to read, particularly when dealing with multiple nested try-catch blocks. Consider the following example:
+
+```typescript
+async function registerUser(user: User): Promise<void> {
+  const email = user.email;
+
+  try {
+    const user = await getUserByEmail(email);
+  } catch (error) {
+    console.error(error);
+
+    if ((error as any).message !== "User not found") {
+      try {
+        const notifyResult = await notifyAdmin(`Failed to get user by email: ${error}`);
+      } catch (notifyError) {
+        console.error(notifyError);
+        throw new Error(`Failed to notify admin: ${notifyError}`);
+      }
+
+      throw new Error(`Failed to get user by email: ${error}`);
+    }
+  }
+
+  if (user) {
+    throw new Error('User already exists');
+  }
+
+  try {
+    const createUserResult = await createUser(user);
+  } catch (createUserError) {
+    console.error(createUserError);
+    throw new Error(`Failed to create user: ${createUserError}`);
+  }
+}
+```
+
+This code is hard to read and maintain due to the nested try-catch blocks and the need to handle different types of errors. TryLess provides a more elegant and concise way to handle errors using the `Result` and `Future` types and utility functions.
+
+## Simplifying with TryLess
+
+If the functions `getUserByEmail` and `createUser` return a `Result` type, the code can be simplified using the `Future` type and utility functions provided by TryLess.
+
+Example:
+
+```typescript
+import { ok, fail, Future } from 'tryless';
+
+async function registerUser(user: User): Future<void, string> {
+  const email = user.email;
+  const [user, userError, userIsError] = await getUserByEmail(email);
+
+  if (userIsError) {
+    console.error(userError);
+
+    if (userError.message !== "User not found") {
+      const notifyResult = await notifyAdmin(`Failed to get user by email: ${userError}`);
+
+      if (notifyResult.isError) {
+        return fail(`Failed to notify admin: ${notifyResult.error}`);
+      }
+
+      return fail(`Failed to get user by email: ${userError}`);
+    }
+  }
+
+  if (user) {
+    return fail('User already exists');
+  }
+
+  const [createUserResult, createUserError, createUserIsError] = await createUser(user);
+
+  if (createUserIsError) {
+    console.error(createUserError);
+
+    return fail(`Failed to create user: ${createUserError}`);
+  }
+
+  return ok();
+}
+```
+
+This code is much easier to read and understand. The `Future` type encapsulates both success and error states, allowing you to handle both cases in a single return statement. The `ok` and `fail` functions create success and error results, respectively, and the `await` keyword is used to wait for the results of asynchronous operations.
 
 ## Features
-- Encapsulate success and error states in a single type
-- Provide utility functions to handle results without try-catch blocks
-- Convert regular and async functions to return results
-- Extend promises to return results
+- Encapsulates success and error states in a single type.
+- Provides utility functions to handle results without try-catch blocks.
+- Converts regular and async functions to return results.
+- Extends promises to return results.
 
 ## Installation
+
 Install the library using npm:
 
 ```bash
 npm install tryless
 ```
 
-## Usage
-Creating Results
-You can create success and error results using the success and error functions.
+## Getting Started
 
-```typescript
-import { ok, error } from 'tryless';
+To get started with TryLess, follow these simple steps:
 
-// Creating a success result
-const result = ok(1);
+1. Install the library using the npm command above.
+2. Import the necessary functions and types (`ok`, `fail`, `Future`) from the library.
+3. Refactor your functions to return `Result` or `Future` types instead of throwing errors.
+4. Use the utility functions to handle results in a concise and readable manner.
 
-// Creating an fail result
-const errResult = fail('An error occurred');
-```
-
-## Handling Results
-TryLess provides several utility functions to handle results:
-
-orDefault(defaultValue: T): T
-orElse(fn: (error: E) => U): T | U
-orThrow(message?: string): T
-andThen(fn: (value: T) => U): IResult<U, E>
-
-```typescript
-import { someResultFunction } from 'tryless';
-
-const result = someResultFunction(1)
-  .orDefault(2)
-  .andThen((value) => value + 1);
-```
-Example
-```typescript
-import { IResult, ok, fail, resultifyFunction } from 'tryless';
-
-// Example function
-const divide = (a: number, b: number): IResult<number, string> => {
-  if (b === 0) {
-    return fail('Division by zero');
-  }
-  return ok(a / b);
-};
-
-// Handling the result
-const result = divide(10, 2)
-  .orDefault(0)
-  .andThen((value) => value * 2);
-
-console.log(result); // Output: 10
-```
-
-### Asynchronous Functions
-You can convert async functions to return results using resultifyAsyncFunction.
-
-```typescript
-import { resultifyAsyncFunction } from 'tryless';
-
-const asyncFunction = async (x: number): Promise<number> => {
-  if (x < 0) throw new Error('Negative value');
-  return x + 1;
-};
-
-const resultifiedFunction = resultifyAsyncFunction(asyncFunction);
-
-resultifiedFunction(1).then(([value, reason, isError]) => {
-  if (isError) {
-    console.error(reason);
-  } else {
-    console.log(value);
-  }
-});
-```
-
-## Promises
-You can convert promises to return results using resultifyPromise or the asResult method on promises.
-
-```typescript
-import { resultifyPromise } from 'tryless';
-
-const promise = fetch('https://example.com');
-
-resultifyPromise(promise).then(([value, reason, isError]) => {
-  if (isError) {
-    console.error(reason);
-  } else {
-    console.log(value);
-  }
-});
-
-// Using asResult method
-fetch('https://example.com').asResult().then(([value, reason, isError]) => {
-  if (isError) {
-    console.error(reason);
-  } else {
-    console.log(value);
-  }
-});
-```
-
-## API
-### Types
-#### IResult<T, E>
-A result type that contains a value, an error, and a boolean indicating if it's an error.
-
-T: Type of the value
-E: Type of the error
-Functions
-```typescript
-ok<T, E = unknown>(value: T): ResultOk<T, E>
-```
-Creates a successful result.
-```typescript
-fail<E, T = unknown>(error: E): ResultFail<E, T>
-```
-Creates an error result.
-```typescript
-resultifyFunction<T, E = unknown, Fn extends (...args: any) => any = () => void>(fn: Fn): (...args: Parameters<Fn>) => IResult<T, E>
-```
-Converts a function into a result function.
-```typescript
-resultifyAsyncFunction<T, E = unknown, Fn extends (...args: any) => any = () => void>(fn: Fn): (...args: Parameters<Fn>) => Promise<IResult<T, E>>
-```
-Converts an async function into a result async function.
-```typescript
-resultifyPromise<T, E = unknown>(promise: Promise<T>): Promise<IResult<T, E>>
-```
-Converts a promise into a result promise.
+With TryLess, you can make your error handling code cleaner, more maintainable, and easier to understand.
 
 ## Contributing
-Contributions are welcome! Please open an issue or submit a pull request on GitHub.
+
+Contributions are welcome! If you have suggestions for improvements or new features, please create an issue or submit a pull request.
 
 ## License
-This project is licensed under the **MIT** License.
+
+This project is licensed under the MIT License. See the LICENSE file for details.
