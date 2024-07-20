@@ -11,6 +11,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "tryless": "^1.0.5"
+    "tryless": "^1.1.0"
   }
 }
