@@ -1,4 +1,4 @@
-import { Future, ok, fail, Result } from "../src";
+import { IFuture, ok, fail, IResult } from "../src";
 import { assertType } from "./testing";
 
 describe("Future", () => {
@@ -10,7 +10,7 @@ describe("Future", () => {
     return 20 / n;
   }
 
-  async function future(n: number): Future<number, string> {
+  async function future(n: number): IFuture<number, string> {
     if (n === 0) {
       return fail('error');
     }
@@ -21,13 +21,12 @@ describe("Future", () => {
   it("should turn promise into future", async () => {
     const result = await past(2).asResult();
 
-    assertType<Result<number, unknown>>(result);
+    assertType<IResult<number, unknown>>(result);
 
-    const [value, reason, isError] = result;
+    const [value, isOk] = result.unwrap();
 
     expect(value).toBe(10);
-    expect(reason).toBeUndefined();
-    expect(isError).toBeFalsy();
+    expect(isOk).toBeTruthy();
   });
 
   it("should turn promise into future with default value", async () => {
@@ -85,15 +84,14 @@ describe("Future", () => {
   });
 
   it("should turn future into future with mapped value", async () => {
-    const [value, error, isError] = await future(2).andThen((value) => value % 2 === 0 ? 'even' : 'odd');
+    const [value, isOk] = await future(2).andThen((value) => value % 2 === 0 ? 'even' : 'odd').unwrap();
 
-    expect(isError).toBeFalsy();
-    if (isError) {
+    expect(isOk).toBeTruthy();
+    if (!isOk) {
       return;
     }
 
-    assertType<'even' | 'odd'>(value);
-    assertType<undefined>(error);
+    assertType<string>(value);
     expect(value).toBe('even');
   });
 });

@@ -1,5 +1,4 @@
-import { ok, fail } from "../src";
-import { Future } from "../src/future";
+import { ok, fail, IFuture } from "../src";
 import {} from "../src/extensios";
 import { assertType } from "./testing";
 
@@ -7,19 +6,17 @@ import { assertType } from "./testing";
 
 describe("Result", () => {
   it("should create a success result", () => {
-    const [value, reason, isError] = ok(1);
+    const [value, isOk] = ok(1).unwrap();
 
     expect(value).toBe(1);
-    expect(reason).toBeUndefined();
-    expect(isError).toBeFalsy();
+    expect(isOk).toBeTruthy();
   });
 
   it("should create an error result", () => {
-    const [value, reason, isError] = fail("error");
+    const [value, isOk] = fail("error").unwrap();
 
-    expect(value).toBeUndefined();
-    expect(reason).toBe("error");
-    expect(isError).toBeTruthy();
+    expect(value).toBe("error");
+    expect(isOk).toBeFalsy();
   });
 
   it("should not return the default value", () => {
@@ -59,67 +56,31 @@ describe("Result", () => {
   });
 
   it("should map the value", () => {
-    const result = ok<number, string>(1);
-    const [value, reason, isError] = result.andThen((value) => value  % 2 === 0 ? 'even' : 'odd');
+    const result = ok<number, number>(1);
+    const [value, isOk] = result.andThen((value: number) => (value  % 2 === 0 ? 'even' : 'odd') as 'even' | 'odd').unwrap();
 
-    expect(isError).toBeFalsy();
+    expect(isOk).toBeTruthy();
 
-    if (isError) {
-      expect(value).toBeUndefined();
-      expect(reason).toBeDefined();
-      expect(isError).toBeTruthy();
-
-      assertType<string>(reason);
-      assertType<true>(isError);
-      assertType<undefined>(value);
+    if (!isOk) {
+      assertType<number>(value);
+      assertType<false>(isOk);
 
       return;
     }
 
     assertType<'even' | 'odd'>(value);
-    assertType<undefined>(reason);
-    assertType<false>(isError);
+    assertType<true>(isOk);
 
     expect(value).toBe('odd');
-    expect(reason).toBeUndefined();
-    expect(isError).toBeFalsy();
+    expect(isOk).toBeTruthy();
   });
 
   it("should map the error", () => {
     const result = fail<string, number>("error");
-    const [value, reason, isError] = result.andThen((value) => value + 1);
+    const [value, isOk] = result.andThen((value) => value + 1).unwrap();
 
-    expect(value).toBeUndefined();
-    expect(reason).toBe("error");
-    expect(isError).toBeTruthy();
-  });
-
-  it("should create a random result", () => {
-    const [value, reason, isError] =
-      Math.random() > 0.5 ? ok(1) : fail("error");
-
-    assertType<number | undefined>(value);
-    assertType<string | undefined>(reason);
-    assertType<boolean>(isError);
-
-    if (isError) {
-      expect(value).toBeUndefined();
-      expect(reason).toBeDefined();
-      expect(isError).toBeTruthy();
-
-      assertType<string>(reason);
-      assertType<true>(isError);
-      assertType<undefined>(value);
-      return;
-    }
-
-    expect(value).toBe(1);
-    expect(reason).toBeUndefined();
-    expect(isError).toBeFalsy();
-
-    assertType<number>(value);
-    assertType<undefined>(reason);
-    assertType<false>(isError);
+    expect(isOk).toBeFalsy();
+    expect(value).toBe("error");
   });
 
   it("should turn promise into result", async () => {
@@ -131,17 +92,15 @@ describe("Result", () => {
       return 17 / n;
     }
 
-    let [value, reason, isError] = await fn(2).asResult();
+    let [value, isOk] = await fn(2).asResult().unwrap();
 
+    expect(isOk).toBeTruthy();
     expect(value).toBe(8.5);
-    expect(reason).toBeUndefined();
-    expect(isError).toBeFalsy();
 
-    [value, reason, isError] = await fn(0).asResult();
+    [value, isOk] = await fn(0).asResult().unwrap();
 
-    expect(value).toBeUndefined();
-    expect(reason).toBeDefined();
-    expect(isError).toBeTruthy();
+    expect(value).toBeDefined();
+    expect(isOk).toBeFalsy();
   });
 
   it("should turn promise into result with default value", async () => {
@@ -213,25 +172,25 @@ describe("Result", () => {
       return 17 / n;
     }
 
-    let [value, reason, isError] = await fn(2)
+    let [value, isOk] = await fn(2)
       .asResult()
-      .andThen((v) => v + 1);
+      .andThen((v) => v + 1)
+      .unwrap();
 
-    expect(value).toBe(9.5);
-    expect(reason).toBeUndefined();
-    expect(isError).toBeFalsy();
+      expect(value).toBe(9.5);
+      expect(isOk).toBeTruthy();
 
-    [value, reason, isError] = await fn(0)
+    [value, isOk] = await fn(0)
       .asResult()
-      .andThen((v) => v + 1);
+      .andThen((v) => v + 1)
+      .unwrap();
 
-    expect(value).toBeUndefined();
-    expect(reason).toBeDefined();
-    expect(isError).toBeTruthy();
+    expect(value).toBeDefined();
+    expect(isOk).toBeFalsy();
   });
 
   it("should return 8.5 for non-zero inputs and 0 for zero input", async () => {
-    async function fn(n: number): Future<number, string> {
+    async function fn(n: number): IFuture<number, string> {
       if (n === 0) {
         return fail("Cannot divide by zero");
       }

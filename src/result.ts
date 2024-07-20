@@ -1,91 +1,144 @@
-export type IResultData<T, E, K> = [T, E, K];
 
-export interface IResultOps<T, E> {
-  orDefault: (defaultValue: T) => T;
-  orElse: <U = T>(fn: (error: E) => U) => T | U;
-  orThrow: <E=string>(error?: E) => T;
-  andThen: <U>(fn: (value: T) => U) => Result<U, E>;
-}
+export type IResultOk<T, E=undefined> = Result<T, E, true>;
+export type IResultFail<E, T=undefined> = Result<T, E, false>;
+export type IResult<T, E=unknown> = IResultOk<T, E> | IResultFail<E, T>;
+export type IFuture<T, E=unknown> = Promise<IResult<T, E>>;
 
-/**
- * Result type that contains a value, an error and a boolean indicating if it's an error
- * @param T Type of the value
- * @param E Type of the error
- * @returns A tuple with the value, the error and a boolean indicating if it's an error
- * @example
- * const value = someResultFunction(1).orDefault(2).andThen((value) => value + 1);
- */
-export type Result<T, E> = (
-  | IResultData<T, undefined, false>
-  | IResultData<undefined, E, true>
-) &
-  IResultOps<T, E>;
+export class Result<T, E, K extends boolean> {
+  protected readonly _result: T | E;
+  protected readonly _success: K;
 
-export type IResultOk<T, E = unknown> = IResultData<T, undefined, false> &
-  IResultOps<T, E>;
-export type IResultFail<E, T = unknown> = IResultData<undefined, E, true> &
-  IResultOps<T, E>;
-
-export function createResult<E>(value: undefined, error: E): IResultFail<E>;
-export function createResult<T>(
-  value: T,
-  error: undefined
-): IResultOk<T>;
-export function createResult<T, E>(value: T, error: E): Result<T, E> {
-  let result: Result<T, E>;
-  const ops: IResultOps<T, E> = {
-    orDefault,
-    orElse,
-    orThrow,
-    andThen,
-  };
-
-  if (error !== undefined) {
-    result = Object.assign([undefined, error, true], ops) as Result<T, E>;
-  } else {
-    result = Object.assign([value, undefined, false], ops) as Result<T, E>;
+  get value(): this extends Result<infer T, E, false> ? T : never {
+    if (!this._success) {
+      return undefined as this extends Result<infer T, E, false> ? T : never;
+    }
+    return this._result as this extends Result<infer T, E, false> ? T : never;
   }
 
-  return result;
+  get reason(): this extends Result<T, infer E, true> ? E : never {
+    if (this._success) {
+      return undefined as this extends Result<T, infer E, true> ? E : never;
+    }
+    return this._result as this extends Result<T, infer E, true> ? E : never;
+  }
 
-  function orDefault<U = T>(defaultValue: U): T | U {
-    if (error) {
+  isFail(): this is Result<undefined, E, false> {
+    return !this._success;
+  }
+
+  isOk(): this is Result<T, undefined, true> {
+    return this._success;
+  }
+
+  protected constructor(value: E, success: false);
+  protected constructor(value: T, success: true);
+  protected constructor(value: T | E, success: K) {
+    this._result = value;
+    this._success = success;
+  }
+
+  public orDefault<U = T>(defaultValue: U): T | U {
+    if (!this._success) {
       return defaultValue;
     }
 
-    return value;
+    return this._result as T;
   }
 
-  function orElse<U = T>(fn: (error: E) => U): T | U {
-    if (error) {
-      return fn(error);
+  public orElse<U = T>(fn: (error: E) => U): T | U {
+    if (!this._success) {
+      return fn(this._result as E);
     }
 
-    return value;
+    return this._result as T;
   }
 
-  function orThrow<E=string>(err?: E): T {
-    if (error === undefined) {
-      return value;
+  public orThrow<E = string>(err?: E): T {
+    if (this._success) {
+      return this._result as T;
     }
 
     if (err !== undefined) {
       throw err;
     }
 
-    throw error;
+    throw this._result as E;
   }
 
-  function andThen<U>(
-    fn: (value: T) => U
-  ): IResultOk<U, E> | IResultFail<E, U> {
-    if (error !== undefined) {
-      return result as unknown as IResultFail<E, U>;
+  public andThen<U>(fn: (value: T) => U): IResult<U, E> {
+    if (this._success) {
+      return Result.ok<U, E>(fn(this._result as T));
     }
 
-    return ok(fn(value)) as IResultOk<U, E>;
+    return Result.fail<E, U>(this._result as E);
+  }
+
+  public unwrap(): this extends Result<infer T, E, false>
+    ? [T, true]
+    : [E, false];
+    public unwrap(okValue: false): this extends Result<infer T, E, false>
+    ? [T, false]
+    : [E, true];
+  public unwrap(okValue: true): this extends Result<infer T, E, false>
+    ? [T, true]
+    : [E, false];
+  public unwrap(okValue: boolean): this extends Result<infer T, E, false>
+    ? [T, boolean]
+    : [E, boolean];
+  public unwrap(okValue: boolean = true): this extends Result<infer T, E, false>
+    ? [T, boolean]
+    : [E, boolean] {
+    return [this._result as T, (okValue === this._success) as boolean] as this extends Result<
+      infer T,
+      E,
+      false
+    >
+      ? [T, true]
+      : [E, false];
+  }
+
+  public static ok<T, E=undefined>(value: T): IResultOk<T, E> {
+    return new Result(value, true) as unknown as IResultOk<T, E>;
+  }
+
+  public static fail<E, T=undefined>(error: E): IResultFail<E, T> {
+    return new Result(error, false) as unknown as IResultFail<E, T>;
+  }
+
+  public static create<T, E>(
+    value: T | E,
+    isSuccess: boolean = true
+  ): IResult<T, E> {
+    if (isSuccess) {
+      return Result.ok(value as T);
+    }
+
+    return Result.fail(value as E);
+  }
+
+  public static wrap<T, E>(fn: Promise<T>): IFuture<T, E>;
+  public static wrap<T, E>(fn: () => Promise<T>): IFuture<T, E>;
+  public static wrap<T, E>(fn: () => T): IResult<T, E>;
+  public static wrap<T, E>(
+    fn: Promise<T> | (() => T | PromiseLike<T>)
+  ): IResult<T, E> | IFuture<T, E> {
+    if (fn instanceof Promise) {
+      return fn.then(Result.ok, Result.fail) as IFuture<T, E>;
+    }
+
+    try {
+      const result = fn();
+      if (result instanceof Promise) {
+        return result.then(Result.ok, Result.fail) as IFuture<T, E>;
+      }
+
+      return Result.ok(result) as IResult<T, E>;
+    } catch (error) {
+      return Result.fail(error) as IResult<T, E>;
+    }
   }
 }
+
 
 /**
  * Creates a successful result
@@ -94,8 +147,8 @@ export function createResult<T, E>(value: T, error: E): Result<T, E> {
  * @example
  * const [value, reason, isError] = ok(1);
  */
-export function ok<T, E = unknown>(value: T): IResultOk<T, E> {
-  return createResult<T>(value, undefined) as IResultOk<T, E>;
+export function ok<T, E=undefined>(value: T): IResultOk<T, E> {
+  return Result.ok<T, E>(value);
 }
 
 /**
@@ -105,6 +158,6 @@ export function ok<T, E = unknown>(value: T): IResultOk<T, E> {
  * @example
  * const [value, reason, isError] = fail("error");
  */
-export function fail<E, T = unknown>(error: E): IResultFail<E, T> {
-  return createResult<E>(undefined, error) as IResultFail<E, T>;
+export function fail<E, T=undefined>(error: E): IResultFail<E, T> {
+  return Result.fail<E, T>(error);
 }
