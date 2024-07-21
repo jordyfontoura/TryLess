@@ -1,15 +1,15 @@
-import {fail, Future, ok, Result} from 'tryless';
+import {fail, IFuture, ok} from 'tryless';
 
 
 const apiURL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/btc.json';
 const currencyFormatter = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'});
 
 
-async function getBitcoinPrice(): Future<number, string> {
-  const [response, error, isError] = await fetch(apiURL).asResult();
+async function getBitcoinPrice(): IFuture<number, string> {
+  const [response, isOk] = await fetch(apiURL).asResult().unwrap();
 
-  if (isError) {
-    return fail(`Failed to fetch data: ${error}`);
+  if (!isOk) {
+    return fail(`Failed to fetch data: ${response}`);
   }
 
   if (!response.ok) {
@@ -30,10 +30,10 @@ async function getBitcoinPrice(): Future<number, string> {
     return fail(`Invalid content type. Expecting application/json but got: ${contentType}`);
   }
 
-  const [json, parseError, isParseError] = await response.json().asResult();
+  const [json, isParseOk] = await response.json().asResult().unwrap();
 
-  if (isParseError) {
-    return fail(`Failed to parse JSON: ${parseError}`);
+  if (!isParseOk) {
+    return fail(`Failed to parse JSON: ${json}`);
   }
 
   if (!json) {
@@ -50,10 +50,10 @@ async function getBitcoinPrice(): Future<number, string> {
 }
 
 async function main() {
-  const [price, error, isError] = await getBitcoinPrice();
+  const [price, isError] = await getBitcoinPrice().unwrap(false);
 
   if (isError) {
-    console.error(error);
+    console.error(price);
     return;
   }
 

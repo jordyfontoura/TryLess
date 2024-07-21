@@ -10,10 +10,10 @@ async function getHttpImage(code) {
   }
 
   const url = `https://http.cat/${code}`;
-  const [response, reason, isError] = await fetch(url).asResult();
+  const [response, isError] = await fetch(url).asResult().unwrap(false);
   
   if (isError) {
-    return fail(reason);
+    return fail(response);
   }
 
   if (!response.ok) {
@@ -25,11 +25,11 @@ async function getHttpImage(code) {
 
 async function main() {
   const code = Math.floor(Math.random() * 600);
-  const [value, reason, isError] = await getHttpImage(code);
+  const [value, isOk] = await getHttpImage(code).unwrap();
  
-  if (isError) {
+  if (!isOk) {
     console.log("Failed to fetch image");
-    console.error(reason);
+    console.error(value);
     return;
   }
 
