@@ -147,6 +147,11 @@ export class Result<T, E, K extends boolean> {
     ] as this extends Result<infer T, E, false> ? [T, true] : [E, false];
   }
 
+  /**
+   * Unwraps the result and returns its value, the reason and a boolean indicating whether it is a success or a failure.
+   * @param okValue - A boolean indicating whether the result is expected to be a success or a failure.
+   * @returns An array containing the value, the reason and a boolean indicating success or failure.
+   */
   unwrapAll(): [T, undefined, true] | [undefined, E, false];
   unwrapAll(
     okValue: false
