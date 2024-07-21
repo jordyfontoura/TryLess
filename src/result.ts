@@ -1,8 +1,7 @@
-
-export type IResultOk<T, E=undefined> = Result<T, E, true>;
-export type IResultFail<E, T=undefined> = Result<T, E, false>;
-export type IResult<T, E=unknown> = IResultOk<T, E> | IResultFail<E, T>;
-export type IFuture<T, E=unknown> = Promise<IResult<T, E>>;
+export type IResultOk<T, E = undefined> = Result<T, E, true>;
+export type IResultFail<E, T = undefined> = Result<T, E, false>;
+export type IResult<T, E = unknown> = IResultOk<T, E> | IResultFail<E, T>;
+export type IFuture<T, E = unknown> = Promise<IResult<T, E>>;
 
 /**
  * Represents a result that can either be a success or a failure.
@@ -130,26 +129,42 @@ export class Result<T, E, K extends boolean> {
   public unwrap(): this extends Result<infer T, E, false>
     ? [T, true]
     : [E, false];
-  public unwrap(okValue: false): this extends Result<infer T, E, false>
-    ? [T, false]
-    : [E, true];
-  public unwrap(okValue: true): this extends Result<infer T, E, false>
-    ? [T, true]
-    : [E, false];
-  public unwrap(okValue: boolean): this extends Result<infer T, E, false>
-    ? [T, boolean]
-    : [E, boolean];
-  public unwrap(okValue: boolean = true): this extends Result<infer T, E, false>
-    ? [T, boolean]
-    : [E, boolean] {
-    return [this._result as T, (okValue === this._success) as boolean] as this extends Result<
-      infer T,
-      E,
-      false
-    >
-      ? [T, true]
-      : [E, false];
+  public unwrap(
+    okValue: false
+  ): this extends Result<infer T, E, false> ? [T, false] : [E, true];
+  public unwrap(
+    okValue: true
+  ): this extends Result<infer T, E, false> ? [T, true] : [E, false];
+  public unwrap(
+    okValue: boolean
+  ): this extends Result<infer T, E, false> ? [T, boolean] : [E, boolean];
+  public unwrap(
+    okValue: boolean = true
+  ): this extends Result<infer T, E, false> ? [T, boolean] : [E, boolean] {
+    return [
+      this._result as T,
+      (okValue === this._success) as boolean,
+    ] as this extends Result<infer T, E, false> ? [T, true] : [E, false];
   }
+
+  unwrapAll(): [T, undefined, true] | [undefined, E, false];
+  unwrapAll(
+    okValue: false
+  ): [T, undefined, false] | [undefined, E, true];
+  unwrapAll(
+    okValue: true
+  ): [T, undefined, true] | [undefined, E, false];
+  unwrapAll(
+    okValue: boolean = true
+  ):
+    | [T, undefined, boolean]
+    | [undefined, E, boolean] {
+      if (this.isOk()) {
+        return [this._result as T, undefined, okValue === this._success] as [T, undefined, true];
+      }
+
+      return [undefined, this._result as E, okValue === this._success] as [undefined, E, false];
+    }
 
   /**
    * Creates a new Result instance representing a success.
@@ -158,7 +173,7 @@ export class Result<T, E, K extends boolean> {
    * @param value - The success value.
    * @returns A new Result instance representing a success.
    */
-  public static ok<T, E=undefined>(value: T): IResultOk<T, E> {
+  public static ok<T, E = undefined>(value: T): IResultOk<T, E> {
     return new Result(value, true) as unknown as IResultOk<T, E>;
   }
 
@@ -169,7 +184,7 @@ export class Result<T, E, K extends boolean> {
    * @param error - The failure reason.
    * @returns A new Result instance representing a failure.
    */
-  public static fail<E, T=undefined>(error: E): IResultFail<E, T> {
+  public static fail<E, T = undefined>(error: E): IResultFail<E, T> {
     return new Result(error, false) as unknown as IResultFail<E, T>;
   }
 
@@ -222,7 +237,6 @@ export class Result<T, E, K extends boolean> {
   }
 }
 
-
 /**
  * Creates a successful result
  * @param value Value to be wrapped
@@ -230,7 +244,7 @@ export class Result<T, E, K extends boolean> {
  * @example
  * const [value, reason, isError] = ok(1);
  */
-export function ok<T, E=undefined>(value: T): IResultOk<T, E> {
+export function ok<T, E = undefined>(value: T): IResultOk<T, E> {
   return Result.ok<T, E>(value);
 }
 
@@ -241,6 +255,6 @@ export function ok<T, E=undefined>(value: T): IResultOk<T, E> {
  * @example
  * const [value, reason, isError] = fail("error");
  */
-export function fail<E, T=undefined>(error: E): IResultFail<E, T> {
+export function fail<E, T = undefined>(error: E): IResultFail<E, T> {
   return Result.fail<E, T>(error);
 }
