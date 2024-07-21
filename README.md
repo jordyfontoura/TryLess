@@ -53,29 +53,34 @@ import { ok, fail, Future } from 'tryless';
 
 async function registerUser(user: User): Future<void, string> {
   const email = user.email;
-  const [user, userError, userIsError] = await getUserByEmail(email);
+  const userResult = await getUserByEmail(email);
 
-  if (userIsError) {
+  if (userResult.isFail()) {
+    const userError = userResult.reason;
     console.error(userError);
 
     if (userError.message !== "User not found") {
       const notifyResult = await notifyAdmin(`Failed to get user by email: ${userError}`);
 
-      if (notifyResult.isError) {
-        return fail(`Failed to notify admin: ${notifyResult.error}`);
+      if (notifyResult.isFail()) {
+        return fail(`Failed to notify admin: ${notifyResult.reason}`);
       }
 
       return fail(`Failed to get user by email: ${userError}`);
     }
   }
 
+  const user = userResult.value;
+
   if (user) {
     return fail('User already exists');
   }
 
-  const [createUserResult, createUserError, createUserIsError] = await createUser(user);
+  const createResult = await createUser(user).unwrapAll();
 
-  if (createUserIsError) {
+  if (createResult.isFail()) {
+    const createUserError = createResult.reason;
+
     console.error(createUserError);
 
     return fail(`Failed to create user: ${createUserError}`);
