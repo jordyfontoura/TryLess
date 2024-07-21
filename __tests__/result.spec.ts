@@ -1,10 +1,18 @@
-import { ok, fail, IFuture } from "../src";
+import { ok, fail, IFuture, IResult } from "../src";
 import {} from "../src/extensios";
 import { assertType } from "./testing";
 
 
 
 describe("Result", () => {
+  function divide(a: number, b: number): IResult<number, string> {
+    if (b === 0) {
+      return fail("Cannot divide by zero");
+    }
+
+    return ok(a / b);
+  }
+
   it("should create a success result", () => {
     const [value, isOk] = ok(1).unwrap();
 
@@ -17,6 +25,24 @@ describe("Result", () => {
 
     expect(value).toBe("error");
     expect(isOk).toBeFalsy();
+  });
+
+  it("should divide two numbers and return a success result", () => {
+    const result = divide(10, 2);
+      
+    expect(result.isOk()).toBeTruthy();
+    expect(result.isFail()).toBeFalsy();
+    expect(result.value).toBe(5);
+    expect(result.reason).toBeUndefined();
+  });
+
+  it("should divide by zero and return an error result", () => {
+    const result = divide(10, 0);
+
+    expect(result.isOk()).toBeFalsy();
+    expect(result.isFail()).toBeTruthy();
+    expect(result.value).toBeUndefined();
+    expect(result.reason).toBe("Cannot divide by zero");
   });
 
   it("should not return the default value", () => {
