@@ -45,6 +45,64 @@ describe("Result", () => {
     expect(result.reason).toBe("Cannot divide by zero");
   });
 
+  it("", () => {
+    let [value, error, isError] = divide(10, 0).unwrapAll();
+
+    expect(value).toBeUndefined();
+    expect(error).toBe("Cannot divide by zero");
+    expect(isError).toBeFalsy();
+
+    [value, error, isError] = divide(10, 2).unwrapAll(false);
+
+    expect(value).toBe(5);
+    expect(error).toBeUndefined();
+    expect(isError).toBeFalsy();
+  })
+
+  it("should return the value and error when dividing by zero", () => {
+    const [value, error, isError] = divide(10, 0).unwrapAll(false);
+
+    if (isError) {
+      assertType<string>(error);
+      assertType<true>(isError);
+      assertType<undefined>(value);
+
+      expect(error).toBe("Cannot divide by zero");
+      expect(isError).toBeTruthy();
+      expect(value).toBeUndefined();
+    } else {
+      assertType<false>(isError);
+      assertType<number>(value);
+      assertType<undefined>(error);
+
+      expect(value).toBeUndefined();
+      expect(isError).toBeFalsy();
+      expect(error).toBe("Cannot divide by zero");
+    }
+  });
+
+  it("should return the value and error when dividing by a non-zero number", () => {
+    const [value, error, isError] = divide(10, 2).unwrapAll(false);
+
+    if (isError) {
+      assertType<string>(error);
+      assertType<true>(isError);
+      assertType<undefined>(value);
+
+      expect(error).toBeUndefined();
+      expect(isError).toBeFalsy();
+      expect(value).toBe(5);
+    } else {
+      assertType<false>(isError);
+      assertType<number>(value);
+      assertType<undefined>(error);
+
+      expect(value).toBe(5);
+      expect(isError).toBeFalsy();
+      expect(error).toBeUndefined();
+    }
+  });
+
   it("should not return the default value", () => {
     const result = ok(1);
 
