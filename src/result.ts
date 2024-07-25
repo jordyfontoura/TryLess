@@ -160,6 +160,9 @@ export class Result<T, E, K extends boolean> {
     okValue: true
   ): [T, undefined, true] | [undefined, E, false];
   unwrapAll(
+    okValue: boolean
+  ): [T, undefined, boolean] | [undefined, E, boolean];
+  unwrapAll(
     okValue: boolean = true
   ):
     | [T, undefined, boolean]
