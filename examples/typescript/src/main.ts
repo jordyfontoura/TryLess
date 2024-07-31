@@ -50,9 +50,9 @@ async function getBitcoinPrice(): IFuture<number, string> {
 }
 
 async function main() {
-  const [price, isError] = await getBitcoinPrice().unwrap(false);
+  const [price, isOk] = await getBitcoinPrice().unwrap();
 
-  if (isError) {
+  if (!isOk) {
     console.error(price);
     return;
   }
