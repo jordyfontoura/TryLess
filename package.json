@@ -1,6 +1,6 @@
 {
   "name": "tryless",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A simple Result type for TypeScript. Inspired by Rust's Result type.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
