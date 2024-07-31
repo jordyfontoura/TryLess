@@ -1,5 +1,7 @@
-export type IResultOk<T, E = undefined> = Result<T, E, true>;
-export type IResultFail<E, T = undefined> = Result<T, E, false>;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export type IResultOk<T, E = undefined> = Result<T, undefined, true>;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export type IResultFail<E, T = undefined> = Result<undefined, E, false>;
 export type IResult<T, E = unknown> = IResultOk<T, E> | IResultFail<E, T>;
 export type IFuture<T, E = unknown> = Promise<IResult<T, E>>;
 
@@ -11,44 +13,44 @@ export type IFuture<T, E = unknown> = Promise<IResult<T, E>>;
  */
 export class Result<T, E, K extends boolean> {
   protected readonly _result: T | E;
-  protected readonly _success: K;
+  public readonly success: K;
 
   /**
    * Gets the value of the result if it is a success.
    * @returns The success value.
    */
-  get value(): this extends Result<infer T, E, false> ? T : never {
-    if (!this._success) {
-      return undefined as this extends Result<infer T, E, false> ? T : never;
+  get value(): T extends undefined ? undefined : T {
+    if (!this.success) {
+      return undefined as T extends undefined ? undefined : T;
     }
-    return this._result as this extends Result<infer T, E, false> ? T : never;
+    return this._result as T extends undefined ? undefined : T;
   }
 
   /**
    * Gets the reason of the result if it is a failure.
    * @returns The failure reason.
    */
-  get reason(): this extends Result<T, infer E, true> ? E : never {
-    if (this._success) {
-      return undefined as this extends Result<T, infer E, true> ? E : never;
+  get error(): E extends undefined ? undefined : E {
+    if (this.success) {
+      return undefined as E extends undefined ? undefined : E;
     }
-    return this._result as this extends Result<T, infer E, true> ? E : never;
+    return this._result as E extends undefined ? undefined : E;
   }
 
   /**
    * Checks if the result is a failure.
    * @returns True if the result is a failure, false otherwise.
    */
-  isFail(): this is Result<undefined, E, false> {
-    return !this._success;
+  isError(): this is E extends undefined ? never : Result<undefined, E, false> {
+    return !this.success;
   }
 
   /**
    * Checks if the result is a success.
    * @returns True if the result is a success, false otherwise.
    */
-  isOk(): this is Result<T, undefined, true> {
-    return this._success;
+  isOk(): this is T extends undefined ? never : Result<T, undefined, true> {
+    return this.success;
   }
 
   /**
@@ -60,7 +62,7 @@ export class Result<T, E, K extends boolean> {
   protected constructor(value: T, success: true);
   protected constructor(value: T | E, success: K) {
     this._result = value;
-    this._success = success;
+    this.success = success;
   }
 
   /**
@@ -69,7 +71,7 @@ export class Result<T, E, K extends boolean> {
    * @returns The success value or the default value.
    */
   public orDefault<U = T>(defaultValue: U): T | U {
-    if (!this._success) {
+    if (!this.success) {
       return defaultValue;
     }
 
@@ -82,7 +84,7 @@ export class Result<T, E, K extends boolean> {
    * @returns The success value or the result of the function applied to the failure reason.
    */
   public orElse<U = T>(fn: (error: E) => U): T | U {
-    if (!this._success) {
+    if (!this.success) {
       return fn(this._result as E);
     }
 
@@ -96,7 +98,7 @@ export class Result<T, E, K extends boolean> {
    * @throws The error if the result is a failure.
    */
   public orThrow<E = string>(err?: E): T {
-    if (this._success) {
+    if (this.success) {
       return this._result as T;
     }
 
@@ -108,71 +110,34 @@ export class Result<T, E, K extends boolean> {
   }
 
   /**
-   * Applies a function to the value of the result if it is a success and returns a new result.
-   * @typeparam U - The type of the value returned by the function.
-   * @param fn - The function to apply to the success value.
-   * @returns A new result with the value transformed by the function.
-   */
-  public andThen<U>(fn: (value: T) => U): IResult<U, E> {
-    if (this._success) {
-      return Result.ok<U, E>(fn(this._result as T));
-    }
-
-    return Result.fail<E, U>(this._result as E);
-  }
-
-  /**
    * Unwraps the result and returns its value along with a boolean indicating whether it is a success or a failure.
    * @param okValue - A boolean indicating whether the result is expected to be a success or a failure.
    * @returns An array containing the value and a boolean indicating success or failure.
    */
-  public unwrap(): this extends Result<infer T, E, false>
+  public unwrap(): K extends true
     ? [T, true]
     : [E, false];
   public unwrap(
     okValue: false
-  ): this extends Result<infer T, E, false> ? [T, false] : [E, true];
+  ): K extends true
+    ? [T, false]
+    : [E, true];
   public unwrap(
     okValue: true
-  ): this extends Result<infer T, E, false> ? [T, true] : [E, false];
+  ): K extends true
+    ? [T, true]
+    : [E, false];
   public unwrap(
     okValue: boolean
-  ): this extends Result<infer T, E, false> ? [T, boolean] : [E, boolean];
+  ): [T, boolean] | [E, boolean];
   public unwrap(
     okValue: boolean = true
-  ): this extends Result<infer T, E, false> ? [T, boolean] : [E, boolean] {
+  ): [T, boolean] | [E, boolean] {
     return [
-      this._result as T,
-      (okValue === this._success) as boolean,
+      this._result as T | E,
+      (okValue === this.success) as boolean,
     ] as this extends Result<infer T, E, false> ? [T, true] : [E, false];
   }
-
-  /**
-   * Unwraps the result and returns its value, the reason and a boolean indicating whether it is a success or a failure.
-   * @param okValue - A boolean indicating whether the result is expected to be a success or a failure.
-   * @returns An array containing the value, the reason and a boolean indicating success or failure.
-   */
-  unwrapAll(): [T, undefined, true] | [undefined, E, false];
-  unwrapAll(
-    okValue: false
-  ): [T, undefined, false] | [undefined, E, true];
-  unwrapAll(
-    okValue: true
-  ): [T, undefined, true] | [undefined, E, false];
-  unwrapAll(
-    okValue: boolean
-  ): [T, undefined, boolean] | [undefined, E, boolean];
-  unwrapAll(
-    okValue: boolean = true
-  ):
-    | [T, undefined, boolean]
-    | [undefined, E, boolean] {
-      if (this.isOk()) {
-        return [this._result as T, undefined, okValue === this._success] as [T, undefined, true];
-      }
-
-      return [undefined, this._result as E, okValue === this._success] as [undefined, E, false];
-    }
 
   /**
    * Creates a new Result instance representing a success.

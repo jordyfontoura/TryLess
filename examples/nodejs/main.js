@@ -10,7 +10,7 @@ async function getHttpImage(code) {
   }
 
   const url = `https://http.cat/${code}`;
-  const [response, isError] = await fetch(url).asResult().unwrap(false);
+  const [response, isError] = await fetch(url).asSafe().unwrap(false);
   
   if (isError) {
     return fail(response);
