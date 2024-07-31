@@ -56,8 +56,10 @@ declare global {
      * Unwraps the value of the original promise and returns it along with a boolean indicating whether the value is an error.
      * @returns An array containing the value of the original promise, the error if the value is an error, and a boolean indicating whether the value is an error.
      */
-    unwrap: T extends Result<infer X, infer E, boolean>
-      ? (() => Promise<[X, true] | [E, false]>)
+    unwrap: T extends IResult<infer X, infer Y>
+      ? X extends undefined
+        ? () => Promise<[Y, false]>
+        : () => Promise<[X, true]>
       : never;
   }
 }
@@ -149,6 +151,7 @@ Promise.prototype.asSafe = asSafe;
 Promise.prototype.orElse = orElse;
 Promise.prototype.orDefault = orDefault as (defaultValue?: unknown) => Promise<unknown>;
 Promise.prototype.orThrow = orThrow as (err?: unknown) => Promise<never>;
-Promise.prototype.unwrap = unwrap;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+Promise.prototype.unwrap = unwrap as (okValue?: boolean) => Promise<any>;
 
 export {};

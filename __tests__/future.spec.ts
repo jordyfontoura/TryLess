@@ -140,4 +140,17 @@ describe("Future", () => {
       expect(err).toBe('error');
     }
   });
+
+  it("", async () => {
+    const [value, isOk] = await future(2).unwrap();
+
+    assertType<number | string>(value);
+
+    if (!isOk) {
+      assertType<string>(value);
+      return;
+    }
+
+    assertType<number>(value);
+  })
 });
