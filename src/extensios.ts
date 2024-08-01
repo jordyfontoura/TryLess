@@ -10,7 +10,7 @@ declare global {
      * Converts a promise into a result.
      * @returns A promise that resolves to a result.
      * @example
-     * const [value, isError] = await fetch("https://example.com").asSafe().unwrap();
+     * const [value, isError] = await fetch("https://example.com").asResult().unwrap();
      *
      * if (isError) {
      *  console.error(reason);
@@ -20,9 +20,9 @@ declare global {
      * console.log(value);
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    asSafe: T extends IResult<any, any>
+    asResult: T extends IResult<any, any>
       ? never
-      : <E = unknown>() => IFuture<T, E>;
+      : <E = unknown, U=T>() => IFuture<U, E>;
 
     /**
      * Returns a new promise that resolves to the value of the original promise, or a default value if the original promise resolves to an error.
@@ -64,7 +64,7 @@ declare global {
   }
 }
 
-function asSafe<
+function asResult<
   T = unknown,
   E = unknown
 >(this: IFuture<T, E>): IFuture<T, E> {
@@ -147,7 +147,7 @@ async function unwrap<T, E>(
 }
 
 
-Promise.prototype.asSafe = asSafe;
+Promise.prototype.asResult = asResult;
 Promise.prototype.orElse = orElse;
 Promise.prototype.orDefault = orDefault as (defaultValue?: unknown) => Promise<unknown>;
 Promise.prototype.orThrow = orThrow as (err?: unknown) => Promise<never>;

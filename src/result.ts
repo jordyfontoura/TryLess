@@ -19,7 +19,7 @@ export class Result<T, E, K extends boolean> {
    * Gets the value of the result if it is a success.
    * @returns The success value.
    */
-  get value(): T extends undefined ? undefined : T {
+  get data(): T extends undefined ? undefined : T {
     if (!this.success) {
       return undefined as T extends undefined ? undefined : T;
     }

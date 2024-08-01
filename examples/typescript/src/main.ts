@@ -6,7 +6,7 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {style: 'currency', cur
 
 
 async function getBitcoinPrice(): IFuture<number, string> {
-  const [response, isOk] = await fetch(apiURL).asSafe().unwrap();
+  const [response, isOk] = await fetch(apiURL).asResult().unwrap();
 
   if (!isOk) {
     return fail(`Failed to fetch data: ${response}`);
@@ -30,7 +30,7 @@ async function getBitcoinPrice(): IFuture<number, string> {
     return fail(`Invalid content type. Expecting application/json but got: ${contentType}`);
   }
 
-  const [json, isParseOk] = await response.json().asSafe().unwrap();
+  const [json, isParseOk] = await response.json().asResult().unwrap();
 
   if (!isParseOk) {
     return fail(`Failed to parse JSON: ${json}`);
