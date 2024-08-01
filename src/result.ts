@@ -1,8 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type IResultOk<T, E = undefined> = Result<T, undefined, true>;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export type IResultFail<E, T = undefined> = Result<undefined, E, false>;
-export type IResult<T, E = unknown> = IResultOk<T, E> | IResultFail<E, T>;
+export type IResultError<E, T = undefined> = Result<undefined, E, false>;
+export type IResult<T, E = unknown> = IResultOk<T, E> | IResultError<E, T>;
 export type IFuture<T, E = unknown> = Promise<IResult<T, E>>;
 
 /**
@@ -157,8 +157,8 @@ export class Result<T, E, K extends boolean> {
    * @param error - The failure reason.
    * @returns A new Result instance representing a failure.
    */
-  public static fail<E, T = undefined>(error: E): IResultFail<E, T> {
-    return new Result(error, false) as unknown as IResultFail<E, T>;
+  public static error<E, T = undefined>(error: E): IResultError<E, T> {
+    return new Result(error, false) as unknown as IResultError<E, T>;
   }
 
   /**
@@ -177,7 +177,7 @@ export class Result<T, E, K extends boolean> {
       return Result.ok(value as T);
     }
 
-    return Result.fail(value as E);
+    return Result.error(value as E);
   }
 
   /**
@@ -194,18 +194,18 @@ export class Result<T, E, K extends boolean> {
     fn: Promise<T> | (() => T | PromiseLike<T>)
   ): IResult<T, E> | IFuture<T, E> {
     if (fn instanceof Promise) {
-      return fn.then(Result.ok, Result.fail) as IFuture<T, E>;
+      return fn.then(Result.ok, Result.error) as IFuture<T, E>;
     }
 
     try {
       const result = fn();
       if (result instanceof Promise) {
-        return result.then(Result.ok, Result.fail) as IFuture<T, E>;
+        return result.then(Result.ok, Result.error) as IFuture<T, E>;
       }
 
       return Result.ok(result) as IResult<T, E>;
     } catch (error) {
-      return Result.fail(error) as IResult<T, E>;
+      return Result.error(error) as IResult<T, E>;
     }
   }
 }
@@ -228,18 +228,18 @@ export function ok<T, E = undefined>(value?: T): IResultOk<T | void, E> {
 }
 
 /**
- * Creates an failed result
+ * Creates an erred result
  * @param error Error to be wrapped
- * @returns An failed result
+ * @returns An erred result
  * @example
- * const [value, reason, isError] = fail("error");
+ * const [value, reason, isError] = err("error");
  */
-export function fail<T = undefined>(): IResultFail<void, T>;
-export function fail<E, T = undefined>(error: E): IResultFail<E, T>;
-export function fail<E, T = undefined>(error?: E): IResultFail<E | void, T> {
+export function err<T = undefined>(): IResultError<void, T>;
+export function err<E, T = undefined>(error: E): IResultError<E, T>;
+export function err<E, T = undefined>(error?: E): IResultError<E | void, T> {
   if (error === undefined) {
-    return Result.fail<void, T>(undefined);
+    return Result.error<void, T>(undefined);
   }
 
-  return Result.fail<E, T>(error);
+  return Result.error<E, T>(error);
 }

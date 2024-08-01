@@ -49,48 +49,48 @@ If the functions `getUserByEmail` and `createUser` return a `Result` type, the c
 Example:
 
 ```typescript
-import { ok, fail, Future } from 'tryless';
+import { ok, err, Future } from 'tryless';
 
 async function registerUser(user: User): Future<void, string> {
   const email = user.email;
   const userResult = await getUserByEmail(email);
 
-  if (userResult.isFail()) {
+  if (userResult.isError()) {
     const userError = userResult.reason;
     console.error(userError);
 
     if (userError.message !== "User not found") {
       const notifyResult = await notifyAdmin(`Failed to get user by email: ${userError}`);
 
-      if (notifyResult.isFail()) {
-        return fail(`Failed to notify admin: ${notifyResult.reason}`);
+      if (notifyResult.isError()) {
+        return err(`Failed to notify admin: ${notifyResult.reason}`);
       }
 
-      return fail(`Failed to get user by email: ${userError}`);
+      return err(`Failed to get user by email: ${userError}`);
     }
   }
 
   const user = userResult.value;
 
   if (user) {
-    return fail('User already exists');
+    return err('User already exists');
   }
 
   const createResult = await createUser(user).unwrapAll();
 
-  if (createResult.isFail()) {
+  if (createResult.isError()) {
     const createUserError = createResult.reason;
 
     console.error(createUserError);
 
-    return fail(`Failed to create user: ${createUserError}`);
+    return err(`Failed to create user: ${createUserError}`);
   }
 
   return ok();
 }
 ```
 
-This code is much easier to read and understand. The `Future` type encapsulates both success and error states, allowing you to handle both cases in a single return statement. The `ok` and `fail` functions create success and error results, respectively, and the `await` keyword is used to wait for the results of asynchronous operations.
+This code is much easier to read and understand. The `Future` type encapsulates both success and error states, allowing you to handle both cases in a single return statement. The `ok` and `err` functions create success and error results, respectively, and the `await` keyword is used to wait for the results of asynchronous operations.
 
 ## Features
 - Encapsulates success and error states in a single type.
@@ -111,7 +111,7 @@ npm install tryless
 To get started with TryLess, follow these simple steps:
 
 1. Install the library using the npm command above.
-2. Import the necessary functions and types (`ok`, `fail`, `Future`) from the library.
+2. Import the necessary functions and types (`ok`, `err`, `Future`) from the library.
 3. Refactor your functions to return `Result` or `Future` types instead of throwing errors.
 4. Use the utility functions to handle results in a concise and readable manner.
 

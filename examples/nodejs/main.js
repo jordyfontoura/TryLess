@@ -1,23 +1,23 @@
-import {fail, ok} from 'tryless'
+import {err, ok} from 'tryless'
 
 async function getHttpImage(code) {
   if (typeof code !== 'number') {
-    return fail('Invalid code');
+    return err('Invalid code');
   }
 
   if (code < 100 || code > 599) {
-    return fail('Invalid code');
+    return err('Invalid code');
   }
 
   const url = `https://http.cat/${code}`;
   const [response, isError] = await fetch(url).asResult().unwrap(false);
   
   if (isError) {
-    return fail(response);
+    return err(response);
   }
 
   if (!response.ok) {
-    return fail(`HTTP CODE ${code} error! status: ${response.status}`);
+    return err(`HTTP CODE ${code} error! status: ${response.status}`);
   }
   
   return ok(url);

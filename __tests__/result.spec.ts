@@ -1,4 +1,4 @@
-import { ok, fail, IFuture, IResult } from "../src";
+import { ok, err, IFuture, IResult } from "../src";
 import {} from "../src/extensios";
 
 
@@ -6,7 +6,7 @@ import {} from "../src/extensios";
 describe("Result", () => {
   function divide(a: number, b: number): IResult<number, string> {
     if (b === 0) {
-      return fail("Cannot divide by zero");
+      return err("Cannot divide by zero");
     }
 
     return ok(a / b);
@@ -20,7 +20,7 @@ describe("Result", () => {
   });
 
   it("should create an error result", () => {
-    const [value, isOk] = fail("error").unwrap();
+    const [value, isOk] = err("error").unwrap();
 
     expect(value).toBe("error");
     expect(isOk).toBeFalsy();
@@ -51,7 +51,7 @@ describe("Result", () => {
   });
 
   it("should return the default value", () => {
-    const result = fail("error");
+    const result = err("error");
 
     expect(result.orDefault(2)).toBe(2);
   });
@@ -63,19 +63,19 @@ describe("Result", () => {
   });
 
   it("should return the default value", () => {
-    const result = fail("error");
+    const result = err("error");
 
     expect(result.orElse(() => 2)).toBe(2);
   });
 
   it("should throw an error", () => {
-    const result = fail("error");
+    const result = err("error");
 
     expect(() => result.orThrow()).toThrow("error");
   });
 
   it("should throw an error with custom message", () => {
-    const result = fail("error");
+    const result = err("error");
 
     expect(() => result.orThrow("custom")).toThrow("custom");
   });
@@ -163,7 +163,7 @@ describe("Result", () => {
   it("should return 8.5 for non-zero inputs and 0 for zero input", async () => {
     async function fn(n: number): IFuture<number, string> {
       if (n === 0) {
-        return fail("Cannot divide by zero");
+        return err("Cannot divide by zero");
       }
 
       return ok(17 / n);

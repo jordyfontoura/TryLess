@@ -1,4 +1,4 @@
-import { IFuture, ok, fail, IResult } from "../src";
+import { IFuture, ok, err, IResult } from "../src";
 import { assertType } from "./testing";
 
 describe("Future", () => {
@@ -12,7 +12,7 @@ describe("Future", () => {
 
   async function future(n: number): IFuture<number, string> {
     if (n === 0) {
-      return fail('error');
+      return err('error');
     }
 
     return ok(20 / n);
@@ -51,7 +51,7 @@ describe("Future", () => {
     assertType<Error>(result.error);
   })
 
-  it("should assert types using asResult and isFail", async () => {
+  it("should assert types using asResult and isError", async () => {
     const result = await past(0).asResult<Error>();
 
     if (result.isError()) {
