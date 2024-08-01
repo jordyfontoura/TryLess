@@ -18,97 +18,97 @@ describe("Future", () => {
     return ok(20 / n);
   }
 
-  it("should assert types using asSafe", async () => {
-    const result = await past(2).asSafe<Error>();
+  it("should assert types using asResult", async () => {
+    const result = await past(2).asResult<Error>();
 
-    assertType<number | undefined>(result.value);
+    assertType<number | undefined>(result.data);
     assertType<Error | undefined>(result.error);
   })
 
-  it("should assert types using asSafe and !success", async () => {
-    const result = await past(0).asSafe<Error>();
+  it("should assert types using asResult and !success", async () => {
+    const result = await past(0).asResult<Error>();
 
     if (!result.success) {
       assertType<Error>(result.error);
-      assertType<undefined>(result.value);
+      assertType<undefined>(result.data);
       return;
     }
 
     assertType<undefined>(result.error);
-    assertType<number>(result.value);
+    assertType<number>(result.data);
   })
 
-  it("should assert types using asSafe and success", async () => {
-    const result = await past(2).asSafe<Error>();
+  it("should assert types using asResult and success", async () => {
+    const result = await past(2).asResult<Error>();
 
     if (result.success) {
-      assertType<number>(result.value);
+      assertType<number>(result.data);
       assertType<undefined>(result.error);
       return;
     }
 
-    assertType<undefined>(result.value);
+    assertType<undefined>(result.data);
     assertType<Error>(result.error);
   })
 
-  it("should assert types using asSafe and isFail", async () => {
-    const result = await past(0).asSafe<Error>();
+  it("should assert types using asResult and isFail", async () => {
+    const result = await past(0).asResult<Error>();
 
     if (result.isError()) {
       assertType<Error>(result.error);
-      assertType<undefined>(result.value);
+      assertType<undefined>(result.data);
       return;
     }
 
     assertType<undefined>(result.error);
-    assertType<number>(result.value);
+    assertType<number>(result.data);
   })
 
-  it("should assert types using asSafe and isOk", async () => {
-    const result = await past(2).asSafe<Error>();
+  it("should assert types using asResult and isOk", async () => {
+    const result = await past(2).asResult<Error>();
 
     if (result.isOk()) {
-      assertType<number>(result.value);
+      assertType<number>(result.data);
       assertType<undefined>(result.error);
       return;
     }
 
-    assertType<undefined>(result.value);
+    assertType<undefined>(result.data);
     assertType<Error>(result.error);
   })
 
   it("should turn promise into future", async () => {
-    const result = await past(2).asSafe();
+    const result = await past(2).asResult();
 
     assertType<IResult<number, unknown>>(result);
     expect(result.success).toBeTruthy();
-    expect(result.value).toBe(10);
+    expect(result.data).toBe(10);
     expect(result.error).toBeUndefined();
   });
 
   it("should turn promise into future with default value", async () => {
-    const value = await past(0).asSafe().orDefault(0);
+    const value = await past(0).asResult().orDefault(0);
 
     assertType<number>(value);
     expect(value).toBe(0);
   });
 
   it("should turn promise into future with error handler", async () => {
-    const value = await past(2).asSafe().orElse(() => 0);
+    const value = await past(2).asResult().orElse(() => 0);
 
     assertType<number>(value);
     expect(value).toBe(10);
   });
 
   it("should turn promise into future with error handler", async () => {
-    const promise = past(2).asSafe<Error>() 
+    const promise = past(2).asResult<Error>() 
     const value = await promise.orThrow((e)=>e.message);
 
     assertType<number>(value);
     expect(value).toBe(10);
 
     try {
-      await past(0).asSafe().orThrow();
+      await past(0).asResult().orThrow();
     } catch (err) {
       expect(err).toStrictEqual(new Error("error"));
     }
@@ -141,7 +141,7 @@ describe("Future", () => {
     }
   });
 
-  it("", async () => {
+  it("should unwrap the value from the future", async () => {
     const [value, isOk] = await future(2).unwrap();
 
     assertType<number | string>(value);
@@ -152,5 +152,9 @@ describe("Future", () => {
     }
 
     assertType<number>(value);
-  })
+  });
+
+  it("should assert types using asResult with different generic types", async () => {
+    assertType<IResult<1, 2>>(await past(2).asResult<2, 1>());
+  });
 });

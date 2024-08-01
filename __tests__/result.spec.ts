@@ -31,7 +31,7 @@ describe("Result", () => {
       
     expect(result.isOk()).toBeTruthy();
     expect(result.isError()).toBeFalsy();
-    expect(result.value).toBe(5);
+    expect(result.data).toBe(5);
     expect(result.error).toBeUndefined();
   });
 
@@ -40,7 +40,7 @@ describe("Result", () => {
 
     expect(result.isOk()).toBeFalsy();
     expect(result.isError()).toBeTruthy();
-    expect(result.value).toBeUndefined();
+    expect(result.data).toBeUndefined();
     expect(result.error).toBe("Cannot divide by zero");
   });
 
@@ -89,12 +89,12 @@ describe("Result", () => {
       return 17 / n;
     }
 
-    let [value, isOk] = await fn(2).asSafe().unwrap();
+    let [value, isOk] = await fn(2).asResult().unwrap();
 
     expect(isOk).toBeTruthy();
     expect(value).toBe(8.5);
 
-    [value, isOk] = await fn(0).asSafe().unwrap();
+    [value, isOk] = await fn(0).asResult().unwrap();
 
     expect(value).toBeDefined();
     expect(isOk).toBeFalsy();
@@ -109,11 +109,11 @@ describe("Result", () => {
       return 17 / n;
     }
 
-    let value = await fn(2).asSafe().orDefault(0);
+    let value = await fn(2).asResult().orDefault(0);
 
     expect(value).toBe(8.5);
 
-    value = await fn(0).asSafe().orDefault(0);
+    value = await fn(0).asResult().orDefault(0);
 
     expect(value).toBe(0);
   });
@@ -128,13 +128,13 @@ describe("Result", () => {
     }
 
     let value = await fn(2)
-      .asSafe()
+      .asResult()
       .orElse(() => 0);
 
     expect(value).toBe(8.5);
 
     value = await fn(0)
-      .asSafe()
+      .asResult()
       .orElse(() => 0);
 
     expect(value).toBe(0);
@@ -149,12 +149,12 @@ describe("Result", () => {
       return 17 / n;
     }
 
-    const value = await fn(2).asSafe().orThrow();
+    const value = await fn(2).asResult().orThrow();
 
     expect(value).toBe(8.5);
 
     try {
-      await fn(0).asSafe().orThrow();
+      await fn(0).asResult().orThrow();
     } catch (err) {
       expect(err).toStrictEqual(new Error("error"));
     }
