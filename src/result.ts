@@ -217,7 +217,13 @@ export class Result<T, E, K extends boolean> {
  * @example
  * const [value, reason, isError] = ok(1);
  */
-export function ok<T, E = undefined>(value: T): IResultOk<T, E> {
+export function ok<E = undefined>(): IResultOk<void, E>;
+export function ok<T, E = undefined>(value: T): IResultOk<T, E>;
+export function ok<T, E = undefined>(value?: T): IResultOk<T | void, E> {
+  if (value === undefined) {
+    return Result.ok<void, E>(undefined);
+  }
+
   return Result.ok<T, E>(value);
 }
 
@@ -228,6 +234,12 @@ export function ok<T, E = undefined>(value: T): IResultOk<T, E> {
  * @example
  * const [value, reason, isError] = fail("error");
  */
-export function fail<E, T = undefined>(error: E): IResultFail<E, T> {
+export function fail<T = undefined>(): IResultFail<void, T>;
+export function fail<E, T = undefined>(error: E): IResultFail<E, T>;
+export function fail<E, T = undefined>(error?: E): IResultFail<E | void, T> {
+  if (error === undefined) {
+    return Result.fail<void, T>(undefined);
+  }
+
   return Result.fail<E, T>(error);
 }
