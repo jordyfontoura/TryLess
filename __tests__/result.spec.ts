@@ -1,180 +1,81 @@
-import { ok, err, IFuture, IResult } from "../src";
-import {} from "../src/extensios";
+import { ok, err, okFulfilled, errReject, resultfy } from '../src/result';
 
+describe('ok', () => {
+  it('should return a success result with data', () => {
+    const data = { name: 'Test' };
+    const result = ok(data);
+    expect(result).toEqual({ success: true, data });
+  });
+});
 
-
-describe("Result", () => {
-  function divide(a: number, b: number): IResult<number, string> {
-    if (b === 0) {
-      return err("Cannot divide by zero");
-    }
-
-    return ok(a / b);
-  }
-
-  it("should create a success result", () => {
-    const [value, isOk] = ok(1).unwrap();
-
-    expect(value).toBe(1);
-    expect(isOk).toBeTruthy();
+describe('err', () => {
+  it('should return an error result with just an error message', () => {
+    const result = err('NotFound');
+    expect(result).toEqual({ success: false, error: 'NotFound' });
   });
 
-  it("should create an error result", () => {
-    const [value, isOk] = err("error").unwrap();
+  it('should return an error result with an error message and reason', () => {
+    const result = err('ValidationError', 'Invalid email');
+    expect(result).toEqual({ success: false, error: 'ValidationError', reason: 'Invalid email' });
+  });
+});
 
-    expect(value).toBe("error");
-    expect(isOk).toBeFalsy();
+describe('okFulfilled', () => {
+  it('should map data and return a success result', () => {
+    const map = (data: number) => data * 2;
+    const result = okFulfilled(map)(5);
+    expect(result).toEqual({ success: true, data: 10 });
+  });
+});
+
+describe('errReject', () => {
+  it('should return a function that returns an error result with the given reason', () => {
+    const errorResultFn = errReject('FetchError');
+    const result = errorResultFn('Network unavailable');
+    expect(result).toEqual({ success: false, error: 'FetchError', reason: 'Network unavailable' });
+  });
+});
+
+describe('resultfy', () => {
+  it('should wrap a synchronous function with a success result', () => {
+    const syncFn = (x: number, y: number) => x + y;
+    const wrappedFn = resultfy(syncFn);
+    expect(wrappedFn(3, 4)).toEqual({ success: true, data: 7 });
   });
 
-  it("should divide two numbers and return a success result", () => {
-    const result = divide(10, 2);
-      
-    expect(result.isOk()).toBeTruthy();
-    expect(result.isError()).toBeFalsy();
-    expect(result.data).toBe(5);
-    expect(result.error).toBeUndefined();
+  it('should wrap a synchronous function with an error result when an exception is thrown', () => {
+    const syncFn = () => { throw new Error('Test error'); };
+    const wrappedFn = resultfy(syncFn);
+    const result = wrappedFn();
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('unknown');
+    expect(result.reason).toBeInstanceOf(Error);
   });
 
-  it("should divide by zero and return an error result", () => {
-    const result = divide(10, 0);
-
-    expect(result.isOk()).toBeFalsy();
-    expect(result.isError()).toBeTruthy();
-    expect(result.data).toBeUndefined();
-    expect(result.error).toBe("Cannot divide by zero");
+  it('should wrap a promise function with a success result', async () => {
+    const asyncFn = async () => 'async result';
+    const wrappedFn = resultfy(asyncFn);
+    await expect(wrappedFn()).resolves.toEqual({ success: true, data: 'async result' });
   });
 
-  it("should not return the default value", () => {
-    const result = ok(1);
-
-    expect(result.orDefault(2)).toBe(1);
+  it('should wrap a promise function with a rejection result', async () => {
+    const asyncFn = async () => { throw new Error('Async error'); };
+    const wrappedFn = resultfy(asyncFn);
+    const result = await wrappedFn();
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('unknown');
+    expect(result.reason).toBeInstanceOf(Error);
   });
 
-  it("should return the default value", () => {
-    const result = err("error");
-
-    expect(result.orDefault(2)).toBe(2);
+  it('should use custom onReject handler for rejected promises', async () => {
+    const asyncFn = async () => { throw new Error('Async error'); };
+    const onReject = (reason: unknown) => err('CustomError', reason);
+    const wrappedFn = resultfy(asyncFn, onReject);
+    const result = await wrappedFn();
+    expect(result).toEqual({ success: false, error: 'CustomError', reason: expect.any(Error) });
   });
 
-  it("should return the value", () => {
-    const result = ok(1);
-
-    expect(result.orElse(() => 2)).toBe(1);
-  });
-
-  it("should return the default value", () => {
-    const result = err("error");
-
-    expect(result.orElse(() => 2)).toBe(2);
-  });
-
-  it("should throw an error", () => {
-    const result = err("error");
-
-    expect(() => result.orThrow()).toThrow("error");
-  });
-
-  it("should throw an error with custom message", () => {
-    const result = err("error");
-
-    expect(() => result.orThrow("custom")).toThrow("custom");
-  });
-
-  it("should turn promise into result", async () => {
-    async function fn(n: number): Promise<number> {
-      if (n === 0) {
-        throw new Error("error");
-      }
-
-      return 17 / n;
-    }
-
-    let [value, isOk] = await fn(2).asResult().unwrap();
-
-    expect(isOk).toBeTruthy();
-    expect(value).toBe(8.5);
-
-    [value, isOk] = await fn(0).asResult().unwrap();
-
-    expect(value).toBeDefined();
-    expect(isOk).toBeFalsy();
-  });
-
-  it("should turn promise into result with default value", async () => {
-    async function fn(n: number): Promise<number> {
-      if (n === 0) {
-        throw new Error("error");
-      }
-
-      return 17 / n;
-    }
-
-    let value = await fn(2).asResult().orDefault(0);
-
-    expect(value).toBe(8.5);
-
-    value = await fn(0).asResult().orDefault(0);
-
-    expect(value).toBe(0);
-  });
-
-  it("should turn promise into result with error handler", async () => {
-    async function fn(n: number): Promise<number> {
-      if (n === 0) {
-        throw new Error("error");
-      }
-
-      return 17 / n;
-    }
-
-    let value = await fn(2)
-      .asResult()
-      .orElse(() => 0);
-
-    expect(value).toBe(8.5);
-
-    value = await fn(0)
-      .asResult()
-      .orElse(() => 0);
-
-    expect(value).toBe(0);
-  });
-
-  it("should turn promise into result with error handler", async () => {
-    async function fn(n: number): Promise<number> {
-      if (n === 0) {
-        throw new Error("error");
-      }
-
-      return 17 / n;
-    }
-
-    const value = await fn(2).asResult().orThrow();
-
-    expect(value).toBe(8.5);
-
-    try {
-      await fn(0).asResult().orThrow();
-    } catch (err) {
-      expect(err).toStrictEqual(new Error("error"));
-    }
-  });
-
-  it("should return 8.5 for non-zero inputs and 0 for zero input", async () => {
-    async function fn(n: number): IFuture<number, string> {
-      if (n === 0) {
-        return err("Cannot divide by zero");
-      }
-
-      return ok(17 / n);
-    }
-
-    let value = await fn(2).orDefault(0);
-
-    expect(value).toBe(8.5);
-
-    value = await fn(0).orDefault(0);
-
-    expect(value).toBe(0);
+  it('should throw an error when called with an invalid type', () => {
+    expect(() => resultfy(123 as unknown as Parameters<typeof resultfy>[0])).toThrow('fn must be a function or a promise');
   });
 });
