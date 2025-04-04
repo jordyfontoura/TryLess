@@ -1,126 +1,167 @@
-Here is an improved version of your README:
+# Tryless
 
-# TryLess
-TryLess is a TypeScript library designed to simplify error handling and minimize the use of try-catch blocks. The library introduces `Result` and `Future` types that encapsulate both success and error states, along with a set of helper functions to streamline the handling of these results.
-
-## Why Avoid Extensive Use of Try-Catch Blocks?
-While try-catch blocks are a common method for handling errors in JavaScript and TypeScript, they can make your code verbose and difficult to read, particularly when dealing with multiple nested try-catch blocks. Consider the following example:
-
-```typescript
-async function registerUser(user: User): Promise<void> {
-  const email = user.email;
-
-  try {
-    const user = await getUserByEmail(email);
-  } catch (error) {
-    console.error(error);
-
-    if ((error as any).message !== "User not found") {
-      try {
-        const notifyResult = await notifyAdmin(`Failed to get user by email: ${error}`);
-      } catch (notifyError) {
-        console.error(notifyError);
-        throw new Error(`Failed to notify admin: ${notifyError}`);
-      }
-
-      throw new Error(`Failed to get user by email: ${error}`);
-    }
-  }
-
-  if (user) {
-    throw new Error('User already exists');
-  }
-
-  try {
-    const createUserResult = await createUser(user);
-  } catch (createUserError) {
-    console.error(createUserError);
-    throw new Error(`Failed to create user: ${createUserError}`);
-  }
-}
-```
-
-This code is hard to read and maintain due to the nested try-catch blocks and the need to handle different types of errors. TryLess provides a more elegant and concise way to handle errors using the `Result` and `Future` types and utility functions.
-
-## Simplifying with TryLess
-
-If the functions `getUserByEmail` and `createUser` return a `Result` type, the code can be simplified using the `Future` type and utility functions provided by TryLess.
-
-Example:
-
-```typescript
-import { ok, err, Future } from 'tryless';
-
-async function registerUser(user: User): Future<void, string> {
-  const email = user.email;
-  const userResult = await getUserByEmail(email);
-
-  if (userResult.isError()) {
-    const userError = userResult.reason;
-    console.error(userError);
-
-    if (userError.message !== "User not found") {
-      const notifyResult = await notifyAdmin(`Failed to get user by email: ${userError}`);
-
-      if (notifyResult.isError()) {
-        return err(`Failed to notify admin: ${notifyResult.reason}`);
-      }
-
-      return err(`Failed to get user by email: ${userError}`);
-    }
-  }
-
-  const user = userResult.value;
-
-  if (user) {
-    return err('User already exists');
-  }
-
-  const createResult = await createUser(user).unwrapAll();
-
-  if (createResult.isError()) {
-    const createUserError = createResult.reason;
-
-    console.error(createUserError);
-
-    return err(`Failed to create user: ${createUserError}`);
-  }
-
-  return ok();
-}
-```
-
-This code is much easier to read and understand. The `Future` type encapsulates both success and error states, allowing you to handle both cases in a single return statement. The `ok` and `err` functions create success and error results, respectively, and the `await` keyword is used to wait for the results of asynchronous operations.
-
-## Features
-- Encapsulates success and error states in a single type.
-- Provides utility functions to handle results without try-catch blocks.
-- Converts regular and async functions to return results.
-- Extends promises to return results.
+Tryless is a lightweight utility library for handling function and promise results in a consistent way. It provides helper functions to wrap synchronous and asynchronous operations, returning standardized result objects that indicate success or failure. This helps in writing robust code by avoiding try/catch clutter and ensuring consistent error handling.
 
 ## Installation
 
-Install the library using npm:
-
+Using npm:
 ```bash
 npm install tryless
 ```
 
-## Getting Started
+Using yarn:
+```bash
+yarn add tryless
+```
 
-To get started with TryLess, follow these simple steps:
+Using pnpm:
+```bash
+pnpm add tryless
+```
 
-1. Install the library using the npm command above.
-2. Import the necessary functions and types (`ok`, `err`, `Future`) from the library.
-3. Refactor your functions to return `Result` or `Future` types instead of throwing errors.
-4. Use the utility functions to handle results in a concise and readable manner.
+Using bun:
+```bash
+bun add tryless
+```
 
-With TryLess, you can make your error handling code cleaner, more maintainable, and easier to understand.
+## Overview
+
+Tryless uses a result type abstraction with two main outcomes:
+- **Success Result**: Returned when a function executes successfully. It may contain data.
+- **Failure Result**: Returned when an error occurs. Contains an error message and optionally a reason.
+
+The library exports several helper functions and types to handle these cases seamlessly.
+
+## Basic Usage
+
+### Creating Success and Failure Results
+
+Use the helper functions `ok` and `err` to create success and failure results.
+
+```typescript
+import { ok, err } from 'tryless';
+
+// Success with data
+const successResult = ok(42); // { success: true, data: 42 }
+
+// Success without data
+const emptySuccess = ok(); // { success: true }
+
+// Failure with error message
+const failureResult = err('NotFound'); // { success: false, error: 'NotFound' }
+
+// Failure with error message and additional reason
+const detailedFailure = err('ValidationError', 'Invalid input'); // { success: false, error: 'ValidationError', reason: 'Invalid input' }
+```
+
+### Wrapping Functions with resultfy
+
+The `resultfy` function wraps any synchronous or asynchronous function (or promise) and returns a result type.
+
+#### Example with a Synchronous Function
+
+```typescript
+import { resultfy } from 'tryless';
+
+const add = (x: number, y: number) => x + y;
+const wrappedAdd = resultfy(add);
+
+const result = wrappedAdd(3, 4);
+if (result.success) {
+  console.log('Sum:', result.data); // Output: Sum: 7
+} else {
+  console.error('Error:', result.error);
+}
+```
+
+#### Example with an Asynchronous Function
+
+```typescript
+import { resultfy } from 'tryless';
+
+const asyncOperation = async () => {
+  // Simulate asynchronous work
+  return 'data fetched';
+};
+
+const wrappedAsync = resultfy(asyncOperation);
+
+wrappedAsync().then(result => {
+  if (result.success) {
+    console.log('Data:', result.data); // Output: Data: data fetched
+  } else {
+    console.error('Error:', result.error);
+  }
+});
+```
+
+### Mapping and Unwrapping Results
+
+Tryless provides utility functions like `unwrap`, `unwrapError`, `okFulfilled`, `errReject`, `isSuccess`, and `isFailure` to further process the results.
+
+#### Unwrapping Success
+
+```typescript
+import { ok, unwrap } from 'tryless';
+
+const result = ok(100);
+const data = unwrap(result); // data will be 100
+```
+
+#### Handling Errors
+
+```typescript
+import { err, unwrapError } from 'tryless';
+
+const result = err('NotFound');
+// unwrapError will throw if the error does not match the expected value.
+try {
+  const errorData = unwrapError(result, 'NotFound');
+  console.error('Error occurred:', errorData.error);
+} catch (e) {
+  console.error('Unexpected result', e);
+}
+```
+
+## API Reference
+
+- **ok<T>(data?: T)**
+  - Creates a success result. If data is provided, returns an object with the data; otherwise, returns a success result without data.
+
+- **err<E extends string, C = never>(error: E, reason?: C)**
+  - Creates an error result with a required error message and an optional reason.
+
+- **okFulfilled<T, R = T>(map: (data: T) => R): (data: T) => ISuccess<R>**
+  - Transforms data for a success result using the provided mapping function.
+
+- **errReject<E extends string>(error: E): (reason: unknown) => IFailureWithReason<E, unknown>**
+  - Returns a function that wraps a given error reason into an error result with the specified error message.
+
+- **resultfy**
+  - Wraps a function or promise to return a result object instead of throwing exceptions. It supports both synchronous and asynchronous functions.
+  - You can also pass a custom onReject handler to customize error handling for rejected promises.
+
+- **unwrap**
+  - Unwraps the success data from a result. It returns the default value if provided, or throws a `ResultError` upon failure.
+
+- **unwrapError**
+  - Unwraps and validates the expected error from a failure result, and throws a `ResultError` if the expected error does not match.
+
+- **isSuccess** and **isFailure**
+  - Type-guard functions to differentiate between success and failure result types.
+
+## Testing
+
+Tryless includes comprehensive unit tests for all functions. To run the tests, execute:
+
+```bash
+npm test
+```
 
 ## Contributing
 
-Contributions are welcome! If you have suggestions for improvements or new features, please create an issue or submit a pull request.
+Contributions are welcome! Open an issue or pull request to discuss improvements or bug fixes.
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+[MIT](LICENSE)
