@@ -405,6 +405,38 @@ export function mapResult<T extends IUnknownResult, C extends {
 }
 
 /**
+ * Checks if the given result is a success.
+ *
+ * @remarks This helper function determines if the provided result object has a `success` property
+ * set to `true` and, if so, narrows its type by excluding failures.
+ *
+ * @typeParam T - The type of the result extending IUnknownResult, where the failure type (IUnknownFailure)
+ * is excluded if the result is successful.
+ *
+ * @param result - The result object to evaluate.
+ *
+ * @returns `true` if the result is successful; otherwise, `false`.
+ */
+export function isSuccess<T extends IUnknownResult>(result: T): result is Exclude<T, IUnknownFailure> {
+  return result.success === true;
+}
+
+/**
+ * Determines whether the specified result object represents a failure.
+ *
+ * @remarks
+ * A result is considered a failure when its `success` property is strictly `false`.
+ *
+ * @param result - The result object to evaluate.
+ * @typeParam T - A type extending IUnknownResult.
+ *
+ * @returns `true` if the result represents a failure; otherwise, `false`.
+ */
+export function isFailure<T extends IUnknownResult>(result: T): result is Exclude<T, IUnknownSuccess> {
+  return result.success === false;
+}
+
+/**
  * Custom error class for handling result errors.
  */
 export class ResultError extends Error {
