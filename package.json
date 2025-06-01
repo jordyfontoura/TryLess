@@ -1,16 +1,20 @@
 {
   "name": "tryless",
-  "version": "1.4.1",
+  "version": "1.4.3",
   "description": "A simple Result type for TypeScript. Inspired by Rust's Result type.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
-  "type": "module",
   "exports": {
     ".": {
-      "require": "./dist/index.cjs.js",
-      "import": "./dist/index.esm.js",
-      "types": "./dist/index.d.ts"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.esm.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs.js"
+      }
     }
   },
   "files": [
@@ -21,7 +25,8 @@
   "scripts": {
     "test": "jest",
     "build": "tsc --project tsconfig.build.json && rollup -c",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
