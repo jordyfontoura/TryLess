@@ -178,7 +178,10 @@ export function unwrap<T extends IUnknownResult, U>(result: T, defaultValue: U):
 export function unwrap<T extends IUnknownResult, U = IUnwrapResult<T>>(result: T): U;
 export function unwrap<T extends IUnknownResult, U = IUnwrapResult<T>>(result: T, defaultValue: U = None as any): T | U {
   if (result.success) {
-    return (result as any).data as U;
+    if ('data' in result) {
+      return (result as ISuccess<any>).data as U;
+    }
+    throw new ResultError(result as IUnknownFailure);
   }
 
   if (defaultValue !== None) {
