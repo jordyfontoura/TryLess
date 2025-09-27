@@ -153,7 +153,7 @@ export function resultfy<F, E extends { success: false }>(
 
   return ((...args: any) => {
     try {
-      const result = (fn as any)(...args);
+      const result = (fn as (...args: any[]) => any)(...args);
       if (result instanceof Promise) {
         return result.then(ok, onReject || (errReject(UnknownError) as any));
       }
