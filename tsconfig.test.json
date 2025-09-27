@@ -6,6 +6,8 @@
     "verbatimModuleSyntax": false,
     "rootDir": ".",
     "outDir": "./.ts-test-dist"
-  }
+  },
+  "include": ["src/**/*", "**/*.test.ts", "**/*.spec.ts"],
+  "exclude": ["node_modules", "dist"]
 }
 
