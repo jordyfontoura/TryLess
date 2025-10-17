@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { UnknownError, ResultError } from './errors';
+import { UnknownError, ResultError, UnwrapError } from './errors';
 import type { IUnknownError } from './errors';
 import type {
   IEmptyFailure,
@@ -181,14 +181,14 @@ export function unwrap<T extends IUnknownResult, U = IUnwrapResult<T>>(result: T
     if ('data' in result) {
       return (result as ISuccess<any>).data as U;
     }
-    throw new ResultError(result as IUnknownFailure);
+    throw new ResultError({ success: false, error: UnwrapError, reason: result.data });
   }
 
   if (defaultValue !== None) {
     return defaultValue;
   }
 
-  throw new ResultError(result as IUnknownFailure);
+  throw new ResultError(result);
 }
 
 /**

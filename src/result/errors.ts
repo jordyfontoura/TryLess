@@ -13,6 +13,17 @@ import type { IUnknownFailure } from './types';
 export const UnknownError = "unknown" as const;
 
 /**
+ * Constant representing an unwrap error.
+ *
+ * @example
+ * ```ts
+ * import { UnwrapError, err } from 'tryless';
+ * const failure = err(UnwrapError);
+ * // { success: false, error: 'unwrap' }
+ */
+export const UnwrapError = "unwrap" as const;
+
+/**
  * Type of {@link UnknownError}.
  */
 export type IUnknownError = typeof UnknownError;
