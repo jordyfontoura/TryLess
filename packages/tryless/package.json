@@ -1,0 +1,75 @@
+{
+  "name": "tryless",
+  "version": "1.4.3",
+  "description": "A simple Result type for TypeScript. Inspired by Rust's Result type.",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.esm.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs.js"
+      }
+    },
+    "./register": {
+      "import": {
+        "types": "./dist/register.d.ts",
+        "default": "./dist/register.esm.js"
+      },
+      "require": {
+        "types": "./dist/register.d.ts",
+        "default": "./dist/register.cjs.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "jest",
+    "build": "tsc --project tsconfig.build.json && rollup -c",
+    "lint": "eslint",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jordyfontoura/tryless.git"
+  },
+  "author": "jordyfontoura",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jordyfontoura/tryless/issues"
+  },
+  "homepage": "https://github.com/jordyfontoura/tryless#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.7.0",
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.14.10",
+    "eslint": "9.x",
+    "jest": "^29.7.0",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.39.0",
+    "rollup-plugin-dts": "^6.2.1",
+    "ts-jest": "^29.2.2",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^7.16.1"
+  },
+  "keywords": [
+    "result",
+    "error",
+    "error-handling",
+    "typed-error",
+    "rust",
+    "typescript"
+  ]
+}
