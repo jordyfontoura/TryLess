@@ -15,6 +15,16 @@
         "types": "./dist/index.d.ts",
         "default": "./dist/index.cjs.js"
       }
+    },
+    "./register": {
+      "import": {
+        "types": "./dist/register.d.ts",
+        "default": "./dist/register.esm.js"
+      },
+      "require": {
+        "types": "./dist/register.d.ts",
+        "default": "./dist/register.cjs.js"
+      }
     }
   },
   "files": [

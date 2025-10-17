@@ -146,3 +146,16 @@ export type IUnwrapResult<T> = T extends ISuccess<infer U>
 // Internal exact helper
 export type IExact<T> = T extends Readonly<infer U> ? U : never;
 
+/**
+ * Represents a Promise that will resolve to a Result.
+ * Commonly used for async operations that can fail.
+ * 
+ * @example
+ * ```ts
+ * async function fetchData(): IFuture<Data, 'NetworkError' | 'ParseError'> {
+ *   // implementation
+ * }
+ * ```
+ */
+export type IFuture<T, E extends string> = Promise<ISuccess<T> | IFailure<E>>;
+

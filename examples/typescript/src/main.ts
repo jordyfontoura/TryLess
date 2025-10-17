@@ -1,16 +1,19 @@
-import {err, IFuture, ok} from 'tryless';
+import 'tryless/register';
 
+import {err, ok} from 'tryless'
 
 const apiURL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/btc.json';
-const currencyFormatter = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'});
+const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 
-async function getBitcoinPrice(): IFuture<number, string> {
-  const [response, isOk] = await fetch(apiURL).asResult().unwrap();
+async function getBitcoinPrice() {
+  const responseResult = await fetch(apiURL).asResult();
 
-  if (!isOk) {
-    return err(`Failed to fetch data: ${response}`);
+  if (!responseResult.success) {
+    return err(`Failed to fetch data: ${responseResult}`)
   }
+
+  const response = responseResult.data
 
   if (!response.ok) {
     return err(`Request erred with status: ${response.status}`);
@@ -30,11 +33,13 @@ async function getBitcoinPrice(): IFuture<number, string> {
     return err(`Invalid content type. Expecting application/json but got: ${contentType}`);
   }
 
-  const [json, isParseOk] = await response.json().asResult().unwrap();
+  const jsonResult = await response.json().asResult();
 
-  if (!isParseOk) {
-    return err(`Failed to parse JSON: ${json}`);
+  if (!jsonResult.success) {
+    return err(`Failed to parse JSON: ${jsonResult}`);
   }
+
+  const json = jsonResult.data
 
   if (!json) {
     return err('Empty JSON');
@@ -50,12 +55,13 @@ async function getBitcoinPrice(): IFuture<number, string> {
 }
 
 async function main() {
-  const [price, isOk] = await getBitcoinPrice().unwrap();
+  const bitcoinResult = await getBitcoinPrice();
 
-  if (!isOk) {
-    console.error(price);
+  if (!bitcoinResult.success) {
+    console.error(bitcoinResult.error);
     return;
   }
+  const price = bitcoinResult.data
 
   console.log(`Bitcoin price: ${currencyFormatter.format(price)}`);
 }
