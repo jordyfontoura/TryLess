@@ -63,15 +63,21 @@ export abstract class Result<T extends true | false> {
   constructor(success: T) {
     this.success = success;
   }
+
+  public abstract toString(): string;
 }
 
-export class SuccessResult extends Result<true> {
+export class Ok extends Result<true> {
   constructor() {
     super(true);
   }
+
+  public toString(): string {
+    return 'Success';
+  }
 }
 
-export class SuccessWithDataResult<T> extends SuccessResult {
+export class OkData<T> extends Ok {
   public data: T;
 
   constructor(data: T) {
@@ -79,24 +85,41 @@ export class SuccessWithDataResult<T> extends SuccessResult {
 
     this.data = data;
   }
+
+  public toString(): string {
+    return `Success<${this.data}>`;
+  }
 }
 
-export class FailureResult<E extends string> extends Result<false> {
+export class Err<E extends string> extends Result<false> {
   public error: E;
+  public stack?: string;
 
   constructor(error: E) {
     super(false);
 
+    if ("captureStackTrace" in Error) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+
     this.error = error;
+  }
+
+  public toString(): string {
+    return `${this.error}: ${this.stack}`;
   }
 }
 
-export class FailureWithReasonResult<E extends string, R = unknown> extends FailureResult<E> {
+export class ErrReason<E extends string, R = unknown> extends Err<E> {
   public reason: R;
 
   constructor(error: E, reason: R) {
     super(error);
 
     this.reason = reason;
+  }
+
+  public toString(): string {
+    return `${this.error}: ${this.reason} - ${this.stack}`;
   }
 }

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { UnknownError, ResultError, UnwrapError } from './errors';
+import { UnknownError, ResultError, UnwrapError, Err, ErrReason, Ok, OkData } from './errors';
 import type { IUnknownError } from './errors';
 import type {
   IEmptyFailure,
@@ -19,6 +19,10 @@ import type {
 const None = Symbol("None") as unknown;
 
 /**
+ * Create an empty success result.
+ */
+export function ok(): Ok;
+/**
  * Create a success result.
  *
  * @example
@@ -28,17 +32,13 @@ const None = Symbol("None") as unknown;
  * ok(42); // => { success: true, data: 42 }
  * ```
  */
-export function ok<T>(data: T): IExact<ISuccess<T>>;
-/**
- * Create an empty success result.
- */
-export function ok(): IExact<IEmptySuccess>;
-export function ok<T>(data: T = None as T): IExact<ISuccess<T>> | IExact<IEmptySuccess> {
+export function ok<T>(data: T): OkData<T>;
+export function ok<T>(data: T = None as T): Ok | OkData<T> {
   if (data === None) {
-    return { success: true };
+    return new Ok();
   }
 
-  return { success: true, data };
+  return new OkData(data);
 }
 
 /**
@@ -53,40 +53,22 @@ export function ok<T>(data: T = None as T): IExact<ISuccess<T>> | IExact<IEmptyS
  * // => { success: false, error: 'Validation', reason: 'Email required' }
  * ```
  */
-export function err(): IExact<IEmptyFailure>;
-export function err<E extends string>(error: E): IExact<IFailure<E>>;
-export function err<E extends string, C>(error: E, reason: C): IExact<IFailureWithReason<E, C>>;
+export function err(): Err<IUnknownError>;
+export function err<E extends string>(error: E): Err<E>;
+export function err<E extends string, C>(error: E, reason: C): ErrReason<E, C>;
 export function err<E extends string, C = never>(
   error: E = None as E,
   reason: C = None as C
-): IExact<IFailure<E> | IEmptyFailure | IFailureWithReason<E, C>> {
+): Err<E> | ErrReason<E, C> | Err<IUnknownError> {
   if (error === None) {
-    const result = { success: false, error: UnknownError as E } as const;
-
-    if ("captureStackTrace" in Error) {
-      Error.captureStackTrace(result, err);
-    }
-
-    return result
+    return new Err<IUnknownError>(UnknownError)
   }
 
   if (reason === None) {
-    const result = { success: false, error } as const;
-
-    if ("captureStackTrace" in Error) {
-      Error.captureStackTrace(result, err);
-    }
-
-    return result
+    return new Err<E>(error);
   }
 
-  const result = { success: false, error, reason } as const;
-
-  if ("captureStackTrace" in Error) {
-    Error.captureStackTrace(result, err);
-  }
-
-  return result;
+  return new ErrReason<E, C>(error, reason);
 }
 
 /**
@@ -137,7 +119,7 @@ export function prettifyResult<R extends IUnknownResult>(result: R, transform?: 
  * double(5); // => { success: true, data: 10 }
  * ```
  */
-export function okFulfilled<T, R = T>(map: (data: T) => R): (data: T) => IExact<ISuccess<R>> {
+export function okFulfilled<T, R = T>(map: (data: T) => R): (data: T) => OkData<R> {
   return (data) => ok(map(data));
 }
 
@@ -152,7 +134,7 @@ export function okFulfilled<T, R = T>(map: (data: T) => R): (data: T) => IExact<
  * // => { success: false, error: 'FetchError', reason: 'Network down' }
  * ```
  */
-export function errReject<E extends string>(error: E): (reason: unknown) => IExact<IFailureWithReason<E, unknown>> {
+export function errReject<E extends string>(error: E): (reason: unknown) => ErrReason<E, unknown> {
   return (reason) => err(error, reason);
 }
 
@@ -169,20 +151,20 @@ export function errReject<E extends string>(error: E): (reason: unknown) => IExa
  */
 export function resultfy<F extends Promise<any>>(
   fn: F
-): Promise<IExact<ISuccess<Awaited<F>>> | IExact<IEmptyUnknownFailure>>;
+): Promise<OkData<Awaited<F>> | ErrReason<IUnknownError, unknown>>;
 export function resultfy<F extends Promise<any>, E extends { success: false }>(
   fn: F,
   onReject: (reason: unknown) => E
-): Promise<{ success: true; data: Awaited<F> } | E>;
+): Promise<OkData<Awaited<F>> | E>;
 export function resultfy<F extends (...args: any) => any>(
   fn: F
 ): ReturnType<F> extends never
-  ? (...args: Parameters<F>) => { success: false; error: IUnknownError; reason: unknown }
+  ? (...args: Parameters<F>) => ErrReason<IUnknownError, unknown>
   : ReturnType<F> extends Promise<never>
-  ? (...args: Parameters<F>) => Promise<IExact<IEmptyUnknownFailure>>
+  ? (...args: Parameters<F>) => Promise<ErrReason<IUnknownError, unknown>>
   : ReturnType<F> extends Promise<infer U>
-  ? (...args: Parameters<F>) => Promise<{ success: true; data: U } | IExact<IEmptyUnknownFailure>>
-  : (...args: Parameters<F>) => { success: true; data: ReturnType<F> } | IExact<IEmptyUnknownFailure>;
+  ? (...args: Parameters<F>) => Promise<OkData<U> | ErrReason<IUnknownError, unknown>>
+  : (...args: Parameters<F>) => OkData<ReturnType<F>> | ErrReason<IUnknownError, unknown>;
 export function resultfy<
   F extends (...args: any) => any,
   E extends { success: false }
@@ -194,8 +176,8 @@ export function resultfy<
   : ReturnType<F> extends Promise<never>
   ? (...args: Parameters<F>) => Promise<E>
   : ReturnType<F> extends Promise<infer U>
-  ? (...args: Parameters<F>) => Promise<IExact<ISuccess<U>> | E>
-  : (...args: Parameters<F>) => IExact<ISuccess<ReturnType<F>>> | E;
+  ? (...args: Parameters<F>) => Promise<OkData<U> | E>
+  : (...args: Parameters<F>) => OkData<ReturnType<F>> | E;
 export function resultfy<F, E extends { success: false }>(
   fn: F,
   onReject?: (reason: unknown) => E
@@ -236,7 +218,7 @@ export function unwrap<T extends IUnknownResult, U = IUnwrapResult<T>>(result: T
 export function unwrap<T extends IUnknownResult, U = IUnwrapResult<T>>(result: T, defaultValue: U = None as any): T | U {
   if (result.success) {
     if ('data' in result) {
-      return (result as ISuccess<any>).data as U;
+      return (result as { data: U }).data;
     }
     throw new ResultError({ success: false, error: UnwrapError, reason: result.data });
   }

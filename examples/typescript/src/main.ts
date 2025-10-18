@@ -2,7 +2,7 @@ import { err, ok, prettifyResult, resultfy } from 'tryless'
 import { z } from 'zod'
 import { writeFileSync } from 'fs';
 
-const apiURL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/btc.json2';
+const apiURL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/btc.json';
 const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 
@@ -74,7 +74,7 @@ async function getBitcoinPrice() {
 async function main() {
   const bitcoinResult = await getBitcoinPrice();
   if (!bitcoinResult.success) {
-    console.error(prettifyResult(bitcoinResult));
+    console.error(bitcoinResult);
     return;
   }
 
