@@ -57,3 +57,46 @@ export class ResultError extends Error {
   }
 }
 
+export abstract class Result<T extends true | false> {
+  public success: T;
+
+  constructor(success: T) {
+    this.success = success;
+  }
+}
+
+export class SuccessResult extends Result<true> {
+  constructor() {
+    super(true);
+  }
+}
+
+export class SuccessWithDataResult<T> extends SuccessResult {
+  public data: T;
+
+  constructor(data: T) {
+    super();
+
+    this.data = data;
+  }
+}
+
+export class FailureResult<E extends string> extends Result<false> {
+  public error: E;
+
+  constructor(error: E) {
+    super(false);
+
+    this.error = error;
+  }
+}
+
+export class FailureWithReasonResult<E extends string, R = unknown> extends FailureResult<E> {
+  public reason: R;
+
+  constructor(error: E, reason: R) {
+    super(error);
+
+    this.reason = reason;
+  }
+}

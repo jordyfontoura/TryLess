@@ -16,7 +16,7 @@ export type IEmptySuccess = { success: true };
 /**
  * Represents an empty failure with the unknown error type.
  */
-export type IEmptyFailure = { success: false; error: IUnknownError };
+export type IEmptyFailure = { success: false; error: IUnknownError; stack?: string };
 
 /**
  * Represents an empty failure with optional reason.
@@ -25,6 +25,7 @@ export type IEmptyUnknownFailure = {
   success: false;
   error: IUnknownError;
   reason?: unknown;
+  stack?: string;
 };
 
 /**
@@ -49,7 +50,7 @@ export type ISuccess<T> = { success: true; data: T };
  * // result => { success: false, error: 'NotFound' }
  * ```
  */
-export type IFailure<E extends string> = { success: false; error: E };
+export type IFailure<E extends string> = { success: false; error: E, stack?: string };
 
 /**
  * Represents a failure with an error of type E and a reason of type R.
@@ -65,6 +66,7 @@ export type IFailureWithReason<E extends string, R> = {
   success: false;
   error: E;
   reason: R;
+  stack?: string;
 };
 
 /**
@@ -98,7 +100,7 @@ export type IUnknownSuccess = { success: true; data?: unknown };
 /**
  * Represents a failure result with a string error and optional unknown reason.
  */
-export type IUnknownFailure = { success: false; error: string; reason?: unknown };
+export type IUnknownFailure = { success: false; error: string; reason?: unknown; stack?: string };
 
 /**
  * Result that can either be a success with data of type T or one of the specified failures.

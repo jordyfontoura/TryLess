@@ -61,14 +61,71 @@ export function err<E extends string, C = never>(
   reason: C = None as C
 ): IExact<IFailure<E> | IEmptyFailure | IFailureWithReason<E, C>> {
   if (error === None) {
-    return { success: false, error: UnknownError as E };
-  }
-  if (reason === None) {
-    return { success: false, error };
+    const result = { success: false, error: UnknownError as E } as const;
+
+    if ("captureStackTrace" in Error) {
+      Error.captureStackTrace(result, err);
+    }
+
+    return result
   }
 
-  return { success: false, error, reason };
+  if (reason === None) {
+    const result = { success: false, error } as const;
+
+    if ("captureStackTrace" in Error) {
+      Error.captureStackTrace(result, err);
+    }
+
+    return result
+  }
+
+  const result = { success: false, error, reason } as const;
+
+  if ("captureStackTrace" in Error) {
+    Error.captureStackTrace(result, err);
+  }
+
+  return result;
 }
+
+/**
+ * Format a result as a string.
+ *
+ * @example
+ * ```ts
+ * import { prettifyResult } from 'tryless';
+ * const result = err('NotFound');
+ * prettifyResult(result); // => 'Failure[NotFound]\nundefined'
+ */
+export function prettifyResult<R extends IUnknownResult>(result: R, transform?: (data: unknown) => string): string {
+  if (result.success) {
+    return `${transform ? transform(result.data) : result.data}`;
+  }
+
+  const stack = result.stack;
+  const error = result.error;
+  let reason = result.reason;
+
+  if (isResult(result.reason)) {
+    reason = prettifyResult(result.reason, transform);
+  }
+
+  if (stack) {
+    if (reason) {
+      return `[${error}] ${transform ? transform(reason) : reason}\n${stack}`;
+    }
+
+    return `[${error}]\n${stack}`;
+  }
+
+  if (reason) {
+    return `[${error}] ${transform ? transform(reason) : reason}`;
+  }
+
+  return `[${error}]`;
+}
+
 
 /**
  * Curried mapper that returns a success result with transformed data.
@@ -271,3 +328,18 @@ export function isFailure<T extends IUnknownResult>(result: T): result is Exclud
   return (result as any).success === false;
 }
 
+export function isResult(result: unknown): result is IUnknownResult {
+  return typeof result === 'object'
+    && result !== null
+    && 'success' in result
+    && typeof result.success === 'boolean'
+    && (result.success || 'error' in result && typeof result.error === 'string');
+}
+
+export function isFailureResult(result: unknown): result is IUnknownFailure {
+  return isResult(result) && !result.success;
+}
+
+export function isSuccessResult(result: unknown): result is IUnknownSuccess {
+  return isResult(result) && result.success;
+}
