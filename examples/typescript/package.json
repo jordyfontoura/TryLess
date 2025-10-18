@@ -10,11 +10,12 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^20.14.11",
+    "@types/node": "^20.19.22",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.3"
   },
   "dependencies": {
-    "tryless": "^1.2.2"
+    "tryless": "workspace:*",
+    "zod": "^4.1.12"
   }
 }

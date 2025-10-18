@@ -1,10 +1,17 @@
 import 'tryless/register';
 
-import {err, ok} from 'tryless'
+import { err, ok } from 'tryless'
+import { z } from 'zod'
 
 const apiURL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/btc.json';
 const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
+
+const bitcoinSchema = z.object({
+  btc: z.object({
+    usd: z.number()
+  })
+}).transform((data) => data.btc.usd);
 
 async function getBitcoinPrice() {
   const responseResult = await fetch(apiURL).asResult();
@@ -45,13 +52,13 @@ async function getBitcoinPrice() {
     return err('Empty JSON');
   }
 
-  const price = json?.btc?.usd;
+  const bitcoinParseResult = bitcoinSchema.safeParse(json);
 
-  if (typeof price !== 'number') {
+  if (!bitcoinParseResult.success) {
     return err('Invalid JSON structure');
   }
 
-  return ok(price);
+  return ok(bitcoinParseResult.data);
 }
 
 async function main() {

@@ -8,7 +8,7 @@ import type { ISuccess, IExact, IEmptyUnknownFailure } from './result/types';
  * Extends the global Promise interface to include the asResult() method
  */
 declare global {
-  interface Promise<T> {
+  export interface Promise<T> {
     /**
      * Converts a Promise to a Result.
      * On success, returns { success: true, data: T }
@@ -27,6 +27,10 @@ declare global {
      * }
      * ```
      */
+    asResult(): Promise<IExact<ISuccess<T>> | IExact<IEmptyUnknownFailure>>;
+  }
+
+  export interface PromiseLike<T> {
     asResult(): Promise<IExact<ISuccess<T>> | IExact<IEmptyUnknownFailure>>;
   }
 }
