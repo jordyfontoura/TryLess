@@ -1,0 +1,33 @@
+# Source files
+src/
+__tests__/
+
+# Configuration files
+tsconfig.json
+tsconfig.build.json
+tsconfig.test.json
+jest.config.js
+rollup.config.js
+eslint.config.mjs
+
+# Development files
+node_modules/
+.turbo/
+.DS_Store
+*.log
+*.lock
+
+# Git files
+.git/
+.gitignore
+
+# CI/CD
+.github/
+
+# Documentation (keep README.md)
+*.md
+!README.md
+
+# Build artifacts (except dist/)
+*.tsbuildinfo
+
