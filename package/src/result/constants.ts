@@ -1,5 +1,6 @@
 /**
- * Constant representing an unknown error.
+ * Constant representing an unknown error type.
+ * Used as the default error value when no specific error is provided.
  *
  * @example
  * ```ts
@@ -11,13 +12,14 @@
 export const UnknownError = "unknown" as const;
 
 /**
- * Constant representing an unwrap error.
+ * Constant representing an unwrap error type.
+ * Used internally when unwrap operations fail.
  *
  * @example
  * ```ts
- * import { UnwrapError, err } from 'tryless';
- * const failure = err(UnwrapError);
- * // { success: false, error: 'unwrap' }
+ * import { UnwrapErrorName } from 'tryless';
+ * // Used internally by UnwrapError class
+ * ```
  */
 export const UnwrapErrorName = "unwrap" as const;
 

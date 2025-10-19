@@ -5,13 +5,32 @@ import { ok, err } from './result/functions';
 import type { IUnknownError } from './result/types';
 
 /**
- * Curried mapper that returns a success result with transformed data.
+ * Creates a curried function that transforms data and wraps it in a success result.
+ * Useful for promise chains and function composition.
+ *
+ * @template T - Type of the input data
+ * @template R - Type of the transformed data
+ * @param map - Function to transform the input data
+ * @returns A function that takes data, transforms it, and returns an Ok result
  *
  * @example
  * ```ts
  * import { okFulfilled } from 'tryless';
+ *
+ * // Simple transformation
  * const double = okFulfilled((n: number) => n * 2);
- * double(5); // => { success: true, data: 10 }
+ * const result = double(5);
+ * // { success: true, data: 10 }
+ *
+ * // Use in promise chains
+ * fetch('https://api.example.com/user')
+ *   .then(res => res.json())
+ *   .then(okFulfilled(user => user.name))
+ *   .then(result => {
+ *     if (result.success) {
+ *       console.log(result.data); // user name
+ *     }
+ *   });
  * ```
  */
 export function okFulfilled<T, R = T>(map: (data: T) => R): (data: T) => Ok<R> {
@@ -19,14 +38,30 @@ export function okFulfilled<T, R = T>(map: (data: T) => R): (data: T) => Ok<R> {
 }
 
 /**
- * Curried error factory that fixes the error label and accepts a reason later.
+ * Creates a curried error factory that wraps rejection reasons in error results.
+ * Particularly useful for converting promise rejections to error results.
+ *
+ * @template E - String literal type for the error identifier
+ * @param error - The error identifier to use for all rejections
+ * @returns A function that takes a reason and returns an Err result
  *
  * @example
  * ```ts
- * import { errReject } from 'tryless';
+ * import { errReject, ok } from 'tryless';
+ *
+ * // Basic usage
  * const onReject = errReject('FetchError');
- * onReject('Network down');
- * // => { success: false, error: 'FetchError', reason: 'Network down' }
+ * const result = onReject('Network down');
+ * // { success: false, error: 'FetchError', reason: 'Network down' }
+ *
+ * // Use in promise chains to convert rejections
+ * const userResult = await fetch('https://api.example.com/user')
+ *   .then(ok, errReject('user:fetch-error'));
+ *
+ * if (!userResult.success) {
+ *   console.log(userResult.error); // 'user:fetch-error'
+ *   console.log(userResult.reason); // rejection reason
+ * }
  * ```
  */
 export function errReject<E extends string>(error: E): (reason: unknown) => Err<E, unknown> {
@@ -36,23 +71,80 @@ export function errReject<E extends string>(error: E): (reason: unknown) => Err<
 }
 
 /**
- * Wrap a function or promise to always return a result.
+ * Wraps a function or promise to always return a result instead of throwing.
+ * Converts both synchronous throws and promise rejections into error results.
+ *
+ * **For Promises:** Wraps a promise to return Ok on fulfillment or Err on rejection.
+ *
+ * **For Functions:** Returns a wrapped version that catches errors and returns results.
+ *
+ * @template F - Type of the function or promise to wrap
+ * @param fn - The function or promise to wrap
+ * @returns Wrapped version that returns Result types
  *
  * @example
  * ```ts
  * import { resultfy } from 'tryless';
- * const sum = (a: number, b: number) => a + b;
- * const safeSum = resultfy(sum);
- * safeSum(1, 2); // => { success: true, data: 3 }
+ *
+ * // Wrap a synchronous function
+ * const divide = (a: number, b: number) => {
+ *   if (b === 0) throw new Error('Division by zero');
+ *   return a / b;
+ * };
+ *
+ * const safeDivide = resultfy(divide);
+ * const result1 = safeDivide(10, 2);
+ * // { success: true, data: 5 }
+ *
+ * const result2 = safeDivide(10, 0);
+ * // { success: false, error: 'unknown', reason: Error('Division by zero') }
+ *
+ * // Wrap a promise
+ * const fetchUser = resultfy(
+ *   fetch('https://api.example.com/user').then(r => r.json())
+ * );
+ *
+ * const userResult = await fetchUser;
+ * if (userResult.success) {
+ *   console.log(userResult.data); // user data
+ * } else {
+ *   console.log(userResult.error); // 'unknown'
+ *   console.log(userResult.reason); // rejection reason
+ * }
  * ```
+ */
+/**
+ * Wraps a promise to return Ok on fulfillment or Err with unknown error on rejection.
+ *
+ * @template F - Promise type to wrap
+ * @param fn - The promise to wrap
+ * @returns Promise that resolves to Ok or Err result
  */
 export function resultfy<F extends Promise<any>>(
   fn: F
 ): Promise<Ok<Awaited<F>> | Err<IUnknownError, unknown>>;
+
+/**
+ * Wraps a promise to return Ok on fulfillment or Err with custom error on rejection.
+ *
+ * @template F - Promise type to wrap
+ * @template E - String literal type for the error identifier
+ * @param fn - The promise to wrap
+ * @param error - Custom error identifier to use for rejections
+ * @returns Promise that resolves to Ok or Err result
+ */
 export function resultfy<F extends Promise<any>, E extends string>(
   fn: F,
   error: E
 ): Promise<Ok<Awaited<F>> | Err<E, unknown>>;
+
+/**
+ * Wraps a function to catch errors and return results with unknown error.
+ *
+ * @template F - Function type to wrap
+ * @param fn - The function to wrap
+ * @returns Wrapped function that returns Result types
+ */
 export function resultfy<F extends (...args: any) => any>(
   fn: F
 ): ReturnType<F> extends never
@@ -62,6 +154,16 @@ export function resultfy<F extends (...args: any) => any>(
   : ReturnType<F> extends Promise<infer U>
   ? (...args: Parameters<F>) => Promise<Ok<U> | Err<IUnknownError, unknown>>
   : (...args: Parameters<F>) => Ok<ReturnType<F>> | Err<IUnknownError, unknown>;
+
+/**
+ * Wraps a function to catch errors and return results with custom error.
+ *
+ * @template F - Function type to wrap
+ * @template E - String literal type for the error identifier
+ * @param fn - The function to wrap
+ * @param error - Custom error identifier to use for errors
+ * @returns Wrapped function that returns Result types
+ */
 export function resultfy<
   F extends (...args: any) => any,
   E extends string
