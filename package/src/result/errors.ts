@@ -1,5 +1,6 @@
-import { None } from './functions';
+import { inspect } from 'util';
 import type { IUnknownFailure } from './types';
+
 
 export type IExtractError<T> = T extends { error: infer E } ? E : never;
 export type IExtractErrors<T> = T extends { error: infer E } ? E : never;
@@ -32,7 +33,9 @@ export const UnwrapErrorName = "unwrap" as const;
  */
 export type IUnknownError = typeof UnknownError;
 
+export type IUnknownOk = OkData<unknown>;
 export type IUnknownErr = Err<string> | ErrReason<string, unknown>;
+export type IUnknownOkErr = IUnknownOk | IUnknownErr;
 
 /**
  * Custom error class for dealing with failures produced by this library.
@@ -67,23 +70,42 @@ export class UnwrapError extends Error {
   public error: string;
   public reason?: unknown;
 
-  constructor(result: IUnknownErr, caller: (...args: unknown[]) => unknown) {
-    let message = `Could not unwrap result`;
+  constructor(result: IUnknownOkErr, caller: (...args: unknown[]) => unknown, customMessage?: string, customError?: string) {
+    let message = customMessage || `Could not unwrap result`;
+
+    const error = customError || ('error' in result ? result.error : UnwrapErrorName);
+    message += ` '${error}'`
+    const obj: { stack?: string } = {}
+    if ("captureStackTrace" in Error) {
+      Error.captureStackTrace(obj, caller);
+    }
+    message += obj.stack?.replace('Error\n', '\n');
+
     if ('stack' in result) {
-      message += ` ${result.stack?.replace('Error\n', '\n')}`;
+      message += ` ${result.stack?.replace('Error\n', '\n\nError created at\n')}`;
     }
     super(message);
 
-    this.error = result.error;
+    this.stack = obj.stack;
+
+    this.error = customError || ('error' in result ? result.error : UnwrapErrorName);
     if ("reason" in result) {
       this.reason = result.reason;
     }
 
-    if ("captureStackTrace" in Error) {
-      Error.captureStackTrace(this, caller);
-    }
-
     this.name = "UnwrapError";
+  }
+
+  [Symbol.for('nodejs.util.inspect.custom')](depth: number, opts: { depth: number | null }) {
+    if (depth < 0) {
+      return this.message;
+    }
+    let msg = this.message;
+    if (this.reason) {
+      const newOpts = { ...opts, depth: opts.depth === null ? null : opts.depth - 1 };
+      msg += `\n\nReason ${inspect(this.reason, newOpts)}`;
+    }
+    return msg;
   }
 }
 
@@ -95,18 +117,20 @@ export abstract class Result<T extends true | false> {
   }
 
   public abstract unwrap(customError?: string): this extends { data: infer U } ? U : never;
-  public abstract unwrapOr<U>(defaultValue: U, customError?: string): this extends { data: infer J } ? J : U;
-  public abstract unwrapOrElse<U>(defaultValue: () => U, customError?: string): this extends { data: infer J } ? J : U;
+  public abstract unwrapOr<U>(defaultValue: U): this extends { data: infer J } ? J : U;
+  public abstract unwrapOrElse<U>(defaultValue: (result: this extends { success: false } ? this : never) => U): this extends { data: infer J } ? J : U;
 
   public abstract unwrapErr(customError?: string): this extends { error: string } ? this : never;
-  public abstract unwrapErrOr<U>(defaultValue: U, customError?: string): this extends { error: string } ? this : U;
-  public abstract unwrapErrOrElse<U>(defaultValue: () => U, customError?: string): this extends { error: string } ? this : U;
+  public abstract unwrapErrOr<U>(defaultValue: U): this extends { error: string } ? this : U;
+  public abstract unwrapErrOrElse<U>(defaultValue: (result: this extends { success: true } ? this : never) => U): this extends { error: string } ? this : U;
 
   public abstract expect<E extends string>(error: E, customError?: string): this extends { error: E } ? this : never;
 
-  public abstract andThen<U>(fn: (data: this extends { data: infer J } ? J : never) => U, customError?: string): this extends { data: unknown } ? OkData<U> : this;
-  public abstract orCatch<E extends IUnknownErr>(fn: (errorResult: this extends { error: infer J } ? this : never) => E, customError?: string): this extends { error: string } ? E : this;
-  public abstract map<U>(fn: (result: this) => U, customError?: string): U;
+  public abstract and<R extends IUnknownOkErr>(result: R): this extends { success: true } ? R : this;
+  public abstract andThen<U extends IUnknownOkErr>(fn: (data: this extends { data: infer J } ? J : never) => U): this extends { data: unknown } ? U : this;
+  public abstract or<R extends IUnknownOkErr>(result: R): this extends { success: false } ? R : this;
+  public abstract orElse<R extends IUnknownErr>(fn: (errorResult: this extends { error: infer J } ? J : never) => R): this extends { error: string } ? R : this;
+  public abstract map<U>(fn: (result: this) => U): U;
 
   public isOk(): this extends { success: true } ? true : false {
     return (this.success === true) as this extends { success: true } ? true : false;
@@ -118,15 +142,7 @@ export abstract class Result<T extends true | false> {
   public abstract toString(): string;
 }
 
-export class Ok extends Result<true> {
-  constructor() {
-    super(true);
-  }
 
-  public toString(): string {
-    return 'Success';
-  }
-}
 
 export class OkData<T> extends Result<true> {
   public data: T;
@@ -137,16 +153,72 @@ export class OkData<T> extends Result<true> {
     this.data = data;
   }
 
+  public unwrap(): this extends { data: infer J } ? J : never {
+    return this.data as unknown as this extends { data: infer J } ? J : never;
+  }
+  public unwrapOr<U>(): this extends { data: infer J } ? J : U {
+    return this.data as unknown as this extends { data: infer J } ? J : U;
+  }
+  public unwrapOrElse<U>(): this extends { data: infer J } ? J : U {
+    return this.data as unknown as this extends { data: infer J } ? J : U;
+  }
+
+  public unwrapErr(customError?: string): this extends { error: string } ? this : never {
+    throw new UnwrapError(this, this.unwrapErr as (...args: unknown[]) => unknown, `Could not unwrap error`, customError);
+  }
+  public unwrapErrOr<U>(defaultValue: U): this extends { error: string; } ? this : U {
+    return defaultValue as this extends { error: string; } ? this : U;
+  }
+  public unwrapErrOrElse<U>(defaultValue: (result: this extends { success: true } ? this : never) => U): this extends { error: string; } ? this : U {
+    return defaultValue(this as this extends { success: true } ? this : never) as this extends { error: string; } ? this : U;
+  }
+
+  public expect<E extends string>(error: E, customError?: string): this extends { error: E } ? this : never {
+    throw new UnwrapError(this, this.expect as (...args: unknown[]) => unknown, `Expected error ${error}, but got success`, customError);
+  }
+
+  public and<R extends IUnknownOkErr>(result: R): this extends { success: true; } ? R : this {
+    return result as this extends { success: true; } ? R : this;
+  }
+
+  public andThen<U extends IUnknownOkErr>(fn: (data: this extends { data: infer J; } ? J : never) => U): this extends { data: unknown; } ? U : this {
+    return fn(this.data as this extends { data: infer J; } ? J : never) as this extends { data: unknown; } ? U : this;
+  }
+
+  public or<R extends IUnknownOkErr>(): this extends { success: false; } ? R : this {
+    return this as this extends { success: false; } ? R : this;
+  }
+
+  public orElse<R extends IUnknownErr>(): this extends { error: string; } ? R : this {
+    return this as this extends { error: string; } ? R : this;
+  }
+
+  public map<U>(fn: (result: this) => U): U {
+    return fn(this) as U;
+  }
+
   public toString(): string {
     return `Success<${this.data}>`;
   }
 }
 
-export class Err<E extends string> extends Result<false> {
-  public error: E;
-  public stack?: string;
+export class Ok extends OkData<undefined> {
+  constructor() {
+    super(undefined);
+  }
 
-  constructor(error: E, caller?: (...args: unknown[]) => unknown) {
+  public toString(): string {
+    return 'Success';
+  }
+}
+
+
+
+export class ErrReason<E extends string, R = unknown> extends Result<false> {
+  public error: E;
+  public reason: R;
+
+  constructor(error: E, reason: R, caller?: (...args: unknown[]) => unknown) {
     super(false);
 
     if ("captureStackTrace" in Error) {
@@ -154,23 +226,62 @@ export class Err<E extends string> extends Result<false> {
     }
 
     this.error = error;
-  }
-
-  public toString(): string {
-    return `${this.error}: ${this.stack}`;
-  }
-}
-
-export class ErrReason<E extends string, R = unknown> extends Err<E> {
-  public reason: R;
-
-  constructor(error: E, reason: R, caller?: (...args: unknown[]) => unknown) {
-    super(error, caller);
-
     this.reason = reason;
+  }
+
+  public unwrap(customError?: string): this extends { data: infer U; } ? U : never {
+    throw new UnwrapError(this, this.unwrap as (...args: unknown[]) => unknown, `Could not unwrap error`, customError);
+  }
+  public unwrapOr<U>(defaultValue: U): this extends { data: infer J; } ? J : U {
+    return defaultValue as this extends { data: infer J; } ? J : U;
+  }
+  public unwrapOrElse<U>(defaultValue: (result: this extends { success: false } ? this : never) => U): this extends { data: infer J; } ? J : U {
+    return defaultValue(this as this extends { success: false } ? this : never) as this extends { data: infer J; } ? J : U;
+  }
+  public unwrapErr(): this extends { error: string; } ? this : never {
+    return this as this extends { error: string; } ? this : never;
+  }
+  public unwrapErrOr<U>(): this extends { error: string; } ? this : U {
+    return this as this extends { error: string; } ? this : U;
+  }
+  public unwrapErrOrElse<U>(): this extends { error: string; } ? this : U {
+    return this as this extends { error: string; } ? this : U;
+  }
+  public expect<U extends string>(error: U, customError?: string): this extends { error: U; } ? this : never {
+    if (this.error as string === error) {
+      return this as this extends { error: U; } ? this : never;
+    }
+
+    throw new UnwrapError(this, this.expect as (...args: unknown[]) => unknown, `Expected error ${error}, but got error ${this.error}`, customError);
+  }
+
+  public and<R extends IUnknownOkErr>(): this extends { success: true; } ? R : this {
+    return this as this extends { success: true; } ? R : this;
+  }
+
+  public andThen<U extends IUnknownOkErr>(): this extends { data: unknown; } ? U : this {
+    return this as this extends { data: unknown; } ? U : this;
+  }
+
+  public or<R extends IUnknownOkErr>(result: R): this extends { success: false; } ? R : this {
+    return result as this extends { success: false; } ? R : this;
+  }
+
+  public orElse<R extends IUnknownErr>(fn: (errorResult: this extends { error: infer J; } ? J : never) => R): this extends { error: string; } ? R : this {
+    return fn(this as this extends { error: infer J; } ? J : never) as this extends { error: string; } ? R : this;
+  }
+
+  public map<U>(fn: (result: this) => U): U {
+    return fn(this) as U;
   }
 
   public toString(): string {
     return `${this.error}: ${this.reason} - ${this.stack}`;
+  }
+}
+
+export class Err<E extends string> extends ErrReason<E, undefined> {
+  constructor(error: E, caller?: (...args: unknown[]) => unknown) {
+    super(error, undefined, caller);
   }
 }
