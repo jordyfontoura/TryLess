@@ -1,9 +1,5 @@
 import { inspect } from 'util';
-import type { IUnknownFailure } from './types';
 
-
-export type IExtractError<T> = T extends { error: infer E } ? E : never;
-export type IExtractErrors<T> = T extends { error: infer E } ? E : never;
 
 /**
  * Constant representing an unknown error.
@@ -33,38 +29,9 @@ export const UnwrapErrorName = "unwrap" as const;
  */
 export type IUnknownError = typeof UnknownError;
 
-export type IUnknownOk = OkData<unknown>;
-export type IUnknownErr = Err<string> | ErrReason<string, unknown>;
+export type IUnknownOk = Ok<unknown>;
+export type IUnknownErr = Err<string, unknown>;
 export type IUnknownOkErr = IUnknownOk | IUnknownErr;
-
-/**
- * Custom error class for dealing with failures produced by this library.
- *
- * @example
- * ```ts
- * import { ResultError } from 'tryless';
- * throw new ResultError({ success: false, error: 'NotFound' });
- * ```
- */
-export class ResultError extends Error {
-  public static messageMap = (result: IUnknownFailure) => {
-    let message = `ResultError ${result.error}`;
-
-    if (result.reason) {
-      message += ` - ${String(result.reason)}`;
-    }
-
-    return message;
-  };
-
-  constructor(result: IUnknownFailure) {
-    const message = ResultError.messageMap(result);
-
-    super(message);
-
-    this.name = "ResultError";
-  }
-}
 
 export class UnwrapError extends Error {
   public error: string;
@@ -144,7 +111,7 @@ export abstract class Result<T extends true | false> {
 
 
 
-export class OkData<T> extends Result<true> {
+export class Ok<T = undefined> extends Result<true> {
   public data: T;
 
   constructor(data: T) {
@@ -202,21 +169,11 @@ export class OkData<T> extends Result<true> {
   }
 }
 
-export class Ok extends OkData<undefined> {
-  constructor() {
-    super(undefined);
-  }
 
-  public toString(): string {
-    return 'Success';
-  }
-}
-
-
-
-export class ErrReason<E extends string, R = unknown> extends Result<false> {
+export class Err<E extends string, R = undefined> extends Result<false> {
   public error: E;
   public reason: R;
+  public stack?: string;
 
   constructor(error: E, reason: R, caller?: (...args: unknown[]) => unknown) {
     super(false);
@@ -277,11 +234,5 @@ export class ErrReason<E extends string, R = unknown> extends Result<false> {
 
   public toString(): string {
     return `${this.error}: ${this.reason} - ${this.stack}`;
-  }
-}
-
-export class Err<E extends string> extends ErrReason<E, undefined> {
-  constructor(error: E, caller?: (...args: unknown[]) => unknown) {
-    super(error, undefined, caller);
   }
 }
