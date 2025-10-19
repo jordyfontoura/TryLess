@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { UnknownError } from './result/constants';
 import { Err, Ok } from './result/classes';
-import { ok, err } from './result/functions';
+import { ok } from './result/functions';
 import type { IUnknownError } from './result/types';
 
 /**
