@@ -3,8 +3,10 @@
   <p><strong>Type-safe error handling for TypeScript without try-catch hell</strong></p>
   
   [![npm version](https://img.shields.io/npm/v/tryless.svg)](https://www.npmjs.com/package/tryless)
+  [![CI](https://github.com/jordyfontoura/tryless/actions/workflows/ci.yml/badge.svg)](https://github.com/jordyfontoura/tryless/actions/workflows/ci.yml)
   [![License](https://img.shields.io/npm/l/tryless.svg)](https://github.com/jordyfontoura/tryless/blob/main/LICENSE)
   [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+  [![npm downloads](https://img.shields.io/npm/dm/tryless.svg)](https://www.npmjs.com/package/tryless)
 </div>
 
 ---
@@ -474,7 +476,65 @@ Type guards for success/error.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We love contributions! Here's how you can help:
+
+### 🐛 Found a Bug?
+
+1. Check if it's already reported in [Issues](https://github.com/jordyfontoura/tryless/issues)
+2. If not, [create a new issue](https://github.com/jordyfontoura/tryless/issues/new) with:
+   - Clear description
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Code example
+
+### 💡 Have a Feature Idea?
+
+1. Open an issue to discuss it first
+2. We'll review and provide feedback
+3. If approved, feel free to submit a PR
+
+### 🔧 Want to Contribute Code?
+
+1. Fork the repository
+2. Create a new branch: `git checkout -b feature/my-feature`
+3. Make your changes
+4. Run tests: `pnpm --filter tryless test`
+5. Run linter: `pnpm --filter tryless lint`
+6. Commit: `git commit -m "feat: add my feature"`
+7. Push: `git push origin feature/my-feature`
+8. Open a Pull Request
+
+### 📝 Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/jordyfontoura/tryless.git
+cd tryless
+
+# Install dependencies
+pnpm install
+
+# Run tests
+pnpm --filter tryless test
+
+# Run tests in watch mode
+pnpm --filter tryless test -- --watch
+
+# Build the package
+pnpm --filter tryless build
+
+# Run linter
+pnpm --filter tryless lint
+```
+
+### ✅ Pull Request Guidelines
+
+- Write clear, descriptive commit messages
+- Follow existing code style
+- Add tests for new features
+- Update documentation if needed
+- Keep PRs focused on a single concern
+- All tests must pass
 
 ## 📄 License
 
