@@ -4,17 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node src/main.ts"
+    "start": "tsx ./src/main.ts",
+    "dev": "tsx watch ./src/main.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^20.14.11",
-    "ts-node": "^10.9.2",
+    "@types/node": "^20.19.22",
+    "tsx": "^4.20.6",
     "typescript": "^5.5.3"
   },
   "dependencies": {
-    "tryless": "^1.2.2"
+    "tryless": "workspace:*",
+    "zod": "^4.1.12"
   }
 }

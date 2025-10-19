@@ -1,41 +1,68 @@
-import {err, ok} from 'tryless'
+import {ok, err, errReject} from 'tryless'
 
-async function getHttpImage(code) {
-  if (typeof code !== 'number') {
-    return err('Invalid code');
+const apiURL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/btc.json';
+const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+
+
+async function getBitcoinPrice() {
+  const responseResult = await fetch(apiURL).then(ok, errReject('bitcoin:fetch-error'));
+
+  if (!responseResult.success) {
+    return responseResult;
   }
 
-  if (code < 100 || code > 599) {
-    return err('Invalid code');
-  }
-
-  const url = `https://http.cat/${code}`;
-  const [response, isError] = await fetch(url).asResult().unwrap(false);
-  
-  if (isError) {
-    return err(response);
-  }
+  const response = responseResult.data
 
   if (!response.ok) {
-    return err(`HTTP CODE ${code} error! status: ${response.status}`);
+    return err('bitcoin:http-error', `Request error with status: ${response.status}`);
   }
-  
-  return ok(url);
+
+  if (response.status === 204) {
+    return err('bitcoin:no-content');
+  }
+
+  const contentType = response.headers.get("content-type");
+
+  if (!contentType) return err('bitcoin:no-content-type');
+
+  if (!contentType.includes("application/json")) {
+    return err('bitcoin:invalid-content-type', `Invalid content type. Expecting application/json but got: ${contentType}`);
+  }
+
+  const jsonResult = await response.json().then(ok, errReject('bitcoin:invalid-json'));
+
+  if (!jsonResult.success) {
+    return jsonResult;
+  }
+
+  const json = jsonResult.data
+
+  if (!json) {
+    return err('bitcoin:empty-json');
+  }
+
+  const price = json?.btc?.usd;
+
+  if (typeof price !== 'number' || !isFinite(price)) {
+    return err('bitcoin:invalid-json-structure', `Invalid JSON structure. Expecting finite number but got: ${typeof price} ${price}`);
+  }
+
+  return ok(price);
 }
 
 async function main() {
-  const code = Math.floor(Math.random() * 600);
-  const [value, isOk] = await getHttpImage(code).unwrap();
- 
-  if (!isOk) {
-    console.log("Failed to fetch image");
-    console.error(value);
-    return;
+  const bitcoinResult = await getBitcoinPrice();
+
+  if (!bitcoinResult.success) {
+    console.error(bitcoinResult.error);
+    return bitcoinResult;
   }
 
-  console.log(value);
+  const price = bitcoinResult.data;
 
-  return process.exit(0);
+  console.log(`Bitcoin price: ${currencyFormatter.format(price)}`);
+
+  return ok(price);
 }
 
 main();

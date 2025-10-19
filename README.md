@@ -1,167 +1,499 @@
-# Tryless
+<div align="center">
+  <h1>🚀 Tryless</h1>
+  <p><strong>Type-safe error handling for TypeScript without try-catch hell</strong></p>
+  
+  [![npm version](https://img.shields.io/npm/v/tryless.svg)](https://www.npmjs.com/package/tryless)
+  [![License](https://img.shields.io/npm/l/tryless.svg)](https://github.com/jordyfontoura/tryless/blob/main/LICENSE)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+</div>
 
-Tryless is a lightweight utility library for handling function and promise results in a consistent way. It provides helper functions to wrap synchronous and asynchronous operations, returning standardized result objects that indicate success or failure. This helps in writing robust code by avoiding try/catch clutter and ensuring consistent error handling.
+---
 
-## Installation
+## 🎯 Why Tryless?
 
-Using npm:
+Say goodbye to deeply nested try-catch blocks and hello to elegant, type-safe error handling. **Tryless** brings Rust-inspired Result types to TypeScript with a developer experience that just feels right.
+
+**Before (nested try-catch hell):**
+```typescript
+async function fetchUser(id: string) {
+  try {
+    const response = await fetch(`/api/users/${id}`);
+    try {
+      const json = await response.json();
+      try {
+        const user = userSchema.parse(json);
+        return user;
+      } catch (error) {
+        throw new Error('Invalid user schema', { cause: error });
+      }
+    } catch (error) {
+      throw new Error('Invalid JSON', { cause: error });
+    }
+  } catch (error) {
+    throw new Error('Fetch failed', { cause: error });
+  }
+}
+```
+
+**After (clean & type-safe):**
+```typescript
+import { ok, err, errReject } from 'tryless';
+
+async function fetchUser(id: string) {
+  const responseResult = await fetch(`/api/users/${id}`)
+    .then(ok, errReject('fetch-failed'));
+  if (!responseResult.success) return responseResult;
+
+  const jsonResult = await responseResult.data.json()
+    .then(ok, errReject('invalid-json'));
+  if (!jsonResult.success) return jsonResult;
+
+  const userResult = userSchema.safeParse(jsonResult.data);
+  if (!userResult.success) return err('invalid-schema', userResult.error);
+
+  return ok(userResult.data);
+}
+```
+
+## ✨ Features
+
+- 🎯 **Type-Safe**: Full TypeScript support with discriminated unions
+- 🔗 **Chainable**: Elegant API with `andThen`, `orElse`, and more
+- 🎨 **Zero Dependencies**: Lightweight and fast
+- 🔍 **Rich Stack Traces**: Detailed error tracking for debugging
+- 🌊 **Promise-Ready**: Built for async/await workflows
+- 🛠️ **Practical Helpers**: `resultfy`, `errReject`, and `okFulfilled` for common patterns
+- 🧩 **Composable**: Easy to integrate into existing codebases
+
+## 📦 Installation
+
 ```bash
 npm install tryless
 ```
 
-Using yarn:
 ```bash
 yarn add tryless
 ```
 
-Using pnpm:
 ```bash
 pnpm add tryless
 ```
 
-Using bun:
-```bash
-bun add tryless
-```
+## 🚀 Quick Start
 
-## Overview
-
-Tryless uses a result type abstraction with two main outcomes:
-- **Success Result**: Returned when a function executes successfully. It may contain data.
-- **Failure Result**: Returned when an error occurs. Contains an error message and optionally a reason.
-
-The library exports several helper functions and types to handle these cases seamlessly.
-
-## Basic Usage
-
-### Creating Success and Failure Results
-
-Use the helper functions `ok` and `err` to create success and failure results.
+### Basic Usage
 
 ```typescript
 import { ok, err } from 'tryless';
 
-// Success with data
-const successResult = ok(42); // { success: true, data: 42 }
+function divide(a: number, b: number) {
+  if (b === 0) return err('division-by-zero');
+  
+  return ok(a / b);
+}
 
-// Success without data
-const emptySuccess = ok(); // { success: true }
+const result = divide(10, 2);
 
-// Failure with error message
-const failureResult = err('NotFound'); // { success: false, error: 'NotFound' }
-
-// Failure with error message and additional reason
-const detailedFailure = err('ValidationError', 'Invalid input'); // { success: false, error: 'ValidationError', reason: 'Invalid input' }
-```
-
-### Wrapping Functions with resultfy
-
-The `resultfy` function wraps any synchronous or asynchronous function (or promise) and returns a result type.
-
-#### Example with a Synchronous Function
-
-```typescript
-import { resultfy } from 'tryless';
-
-const add = (x: number, y: number) => x + y;
-const wrappedAdd = resultfy(add);
-
-const result = wrappedAdd(3, 4);
 if (result.success) {
-  console.log('Sum:', result.data); // Output: Sum: 7
+  console.log(result.data); // 5
 } else {
-  console.error('Error:', result.error);
+  console.log(result.error); // 'division-by-zero'
 }
 ```
 
-#### Example with an Asynchronous Function
+### With Promises
+
+```typescript
+import { ok, errReject } from 'tryless';
+
+async function getUser(id: string) {
+  // Convert promise rejection to error result
+  const result = await fetch(`/api/users/${id}`)
+    .then(ok, errReject('user-fetch-failed'));
+    
+  if (!result.success) {
+    return result; // { success: false, error: 'user-fetch-failed', reason: ... }
+  }
+  
+  return result; // { success: true, data: Response }
+}
+```
+
+### Early Returns Pattern
+
+Tryless promotes clean code with early returns:
+
+```typescript
+import { ok, err } from 'tryless';
+
+async function validateAndCreateUser(data: unknown) {
+  // Validate email
+  if (!data.email) return err('missing-email');
+  
+  // Check if user exists
+  const existingUser = await findUserByEmail(data.email);
+  if (existingUser.success) return err('user-already-exists');
+  
+  // Validate age
+  if (data.age < 18) return err('user-underage');
+  
+  // Create user
+  const user = await createUser(data);
+  return ok(user);
+}
+```
+
+## 🎓 Core Concepts
+
+### Ok and Err
+
+The foundation of Tryless: two simple types that represent success and failure.
+
+```typescript
+import { ok, err } from 'tryless';
+
+// Success result
+const success = ok({ id: 1, name: 'John' });
+// { success: true, data: { id: 1, name: 'John' } }
+
+// Error result with message
+const failure = err('not-found');
+// { success: false, error: 'not-found', reason: undefined }
+
+// Error with additional context
+const detailedError = err('validation-failed', { field: 'email', message: 'Invalid format' });
+// { success: false, error: 'validation-failed', reason: { field: 'email', ... } }
+```
+
+### Checking Results
+
+Use the `success` property to safely narrow types:
+
+```typescript
+const result = divide(10, 2);
+
+if (result.success) {
+  // TypeScript knows this is Ok<number>
+  console.log(result.data); // ✅ Type-safe access
+} else {
+  // TypeScript knows this is Err
+  console.log(result.error); // ✅ Type-safe access
+  console.log(result.reason); // ✅ Type-safe access
+}
+```
+
+## 🛠️ Powerful Helpers
+
+### resultfy
+
+Wrap functions or promises to always return Results instead of throwing:
 
 ```typescript
 import { resultfy } from 'tryless';
 
-const asyncOperation = async () => {
-  // Simulate asynchronous work
-  return 'data fetched';
-};
+// Wrap a function
+const safeDivide = resultfy((a: number, b: number) => {
+  if (b === 0) throw new Error('Division by zero');
+  return a / b;
+});
 
-const wrappedAsync = resultfy(asyncOperation);
+const result = safeDivide(10, 2);
+// { success: true, data: 5 }
 
-wrappedAsync().then(result => {
-  if (result.success) {
-    console.log('Data:', result.data); // Output: Data: data fetched
-  } else {
-    console.error('Error:', result.error);
-  }
+const errorResult = safeDivide(10, 0);
+// { success: false, error: 'unknown', reason: Error('Division by zero') }
+
+// Wrap a promise
+const safeUser = await resultfy(
+  fetch('/api/user').then(r => r.json())
+);
+```
+
+With custom error messages:
+
+```typescript
+const safeFetch = resultfy(
+  fetch('/api/data').then(r => r.json()),
+  'fetch-error'
+);
+
+if (!safeFetch.success) {
+  console.log(safeFetch.error); // 'fetch-error'
+}
+```
+
+### errReject
+
+Perfect for promise chains - converts rejections to error results:
+
+```typescript
+import { ok, errReject } from 'tryless';
+
+const result = await fetch('/api/data')
+  .then(ok, errReject('network-error'))
+  .then(res => res.success ? res.data.json() : res)
+  .then(ok, errReject('parse-error'));
+```
+
+### okFulfilled
+
+Transform data and wrap in a success result - great for mapping:
+
+```typescript
+import { okFulfilled } from 'tryless';
+
+const double = okFulfilled((n: number) => n * 2);
+const result = double(5);
+// { success: true, data: 10 }
+
+// In promise chains
+const users = await fetch('/api/users')
+  .then(r => r.json())
+  .then(okFulfilled(data => data.users))
+  .then(okFulfilled(users => users.map(u => u.name)));
+```
+
+## ⚡ Chaining Operations
+
+### andThen
+
+Chain operations that might fail:
+
+```typescript
+const result = await getUser(id)
+  .andThen(user => getUserPreferences(user.id))
+  .andThen(prefs => validatePreferences(prefs));
+```
+
+### orElse
+
+Recover from errors:
+
+```typescript
+const result = await getUser(id)
+  .orElse(error => {
+    if (error === 'not-found') {
+      return createDefaultUser();
+    }
+    return err(error);
+  });
+```
+
+### unwrapOr
+
+Get data or provide a default:
+
+```typescript
+const user = getUserById(id).unwrapOr({ id: 0, name: 'Guest' });
+```
+
+### unwrapOrElse
+
+Compute a fallback from the error:
+
+```typescript
+const value = getPrice(item).unwrapOrElse(error => {
+  logError(error);
+  return 0;
 });
 ```
 
-### Mapping and Unwrapping Results
+## 🎯 Real-World Examples
 
-Tryless provides utility functions like `unwrap`, `unwrapError`, `okFulfilled`, `errReject`, `isSuccess`, and `isFailure` to further process the results.
-
-#### Unwrapping Success
+### API Request with Validation
 
 ```typescript
-import { ok, unwrap } from 'tryless';
+import { ok, err, errReject } from 'tryless';
+import { z } from 'zod';
 
-const result = ok(100);
-const data = unwrap(result); // data will be 100
-```
+const userSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  email: z.string().email(),
+});
 
-#### Handling Errors
+async function fetchAndValidateUser(id: string) {
+  // Fetch data
+  const fetchResult = await fetch(`/api/users/${id}`)
+    .then(ok, errReject('network-error'));
+  if (!fetchResult.success) return fetchResult;
 
-```typescript
-import { err, unwrapError } from 'tryless';
+  // Check response status
+  const response = fetchResult.data;
+  if (!response.ok) {
+    return err('http-error', { status: response.status });
+  }
 
-const result = err('NotFound');
-// unwrapError will throw if the error does not match the expected value.
-try {
-  const errorData = unwrapError(result, 'NotFound');
-  console.error('Error occurred:', errorData.error);
-} catch (e) {
-  console.error('Unexpected result', e);
+  // Parse JSON
+  const jsonResult = await response.json()
+    .then(ok, errReject('json-parse-error'));
+  if (!jsonResult.success) return jsonResult;
+
+  // Validate schema
+  const validation = userSchema.safeParse(jsonResult.data);
+  if (!validation.success) {
+    return err('validation-error', validation.error);
+  }
+
+  return ok(validation.data);
+}
+
+// Usage
+const userResult = await fetchAndValidateUser('123');
+
+if (userResult.success) {
+  console.log('User:', userResult.data);
+} else {
+  switch (userResult.error) {
+    case 'network-error':
+      console.error('Network failed:', userResult.reason);
+      break;
+    case 'http-error':
+      console.error('HTTP error:', userResult.reason);
+      break;
+    case 'validation-error':
+      console.error('Invalid data:', userResult.reason);
+      break;
+  }
 }
 ```
 
-## API Reference
+### Database Operations
 
-- **ok<T>(data?: T)**
-  - Creates a success result. If data is provided, returns an object with the data; otherwise, returns a success result without data.
+```typescript
+import { ok, err, resultfy } from 'tryless';
 
-- **err<E extends string, C = never>(error: E, reason?: C)**
-  - Creates an error result with a required error message and an optional reason.
+async function createUser(data: UserInput) {
+  // Validate input
+  if (!data.email) return err('missing-email');
+  if (!data.name) return err('missing-name');
 
-- **okFulfilled<T, R = T>(map: (data: T) => R): (data: T) => ISuccess<R>**
-  - Transforms data for a success result using the provided mapping function.
+  // Check if exists
+  const existing = await db.findByEmail(data.email);
+  if (existing) return err('email-already-exists', { email: data.email });
 
-- **errReject<E extends string>(error: E): (reason: unknown) => IFailureWithReason<E, unknown>**
-  - Returns a function that wraps a given error reason into an error result with the specified error message.
+  // Create user (wrapped to catch DB errors)
+  const createResult = await resultfy(
+    db.users.insert(data),
+    'database-error'
+  );
 
-- **resultfy**
-  - Wraps a function or promise to return a result object instead of throwing exceptions. It supports both synchronous and asynchronous functions.
-  - You can also pass a custom onReject handler to customize error handling for rejected promises.
+  if (!createResult.success) return createResult;
 
-- **unwrap**
-  - Unwraps the success data from a result. It returns the default value if provided, or throws a `ResultError` upon failure.
-
-- **unwrapError**
-  - Unwraps and validates the expected error from a failure result, and throws a `ResultError` if the expected error does not match.
-
-- **isSuccess** and **isFailure**
-  - Type-guard functions to differentiate between success and failure result types.
-
-## Testing
-
-Tryless includes comprehensive unit tests for all functions. To run the tests, execute:
-
-```bash
-npm test
+  return ok(createResult.data);
+}
 ```
 
-## Contributing
+### File Operations
 
-Contributions are welcome! Open an issue or pull request to discuss improvements or bug fixes.
+```typescript
+import { readFile } from 'fs/promises';
+import { ok, errReject } from 'tryless';
 
-## License
+async function loadConfig(path: string) {
+  const fileResult = await readFile(path, 'utf-8')
+    .then(ok, errReject('file-read-error'));
+  if (!fileResult.success) return fileResult;
 
-[MIT](LICENSE)
+  try {
+    const config = JSON.parse(fileResult.data);
+    return ok(config);
+  } catch (error) {
+    return err('json-parse-error', error);
+  }
+}
+```
+
+## 📚 API Reference
+
+### Core Functions
+
+#### `ok(data?)`
+Creates a success result.
+
+```typescript
+ok() // { success: true, data: undefined }
+ok(42) // { success: true, data: 42 }
+```
+
+#### `err(error?, reason?)`
+Creates an error result.
+
+```typescript
+err() // { success: false, error: 'unknown', reason: undefined }
+err('not-found') // { success: false, error: 'not-found', reason: undefined }
+err('validation-failed', details) // { success: false, error: 'validation-failed', reason: details }
+```
+
+### Helper Functions
+
+#### `resultfy(fn, error?)`
+Wraps functions/promises to return Results.
+
+```typescript
+resultfy(dangerousFunction)
+resultfy(promise, 'custom-error')
+```
+
+#### `errReject(error)`
+Converts promise rejections to Err results.
+
+```typescript
+promise.then(ok, errReject('fetch-failed'))
+```
+
+#### `okFulfilled(mapFn)`
+Transforms data and wraps in Ok.
+
+```typescript
+okFulfilled((x: number) => x * 2)
+```
+
+### Result Methods
+
+#### `.unwrap(customError?)`
+Returns data or throws UnwrapError.
+
+#### `.unwrapOr(defaultValue)`
+Returns data or default value.
+
+#### `.unwrapOrElse(fn)`
+Returns data or computed default.
+
+#### `.andThen(fn)`
+Chains operations on success.
+
+#### `.orElse(fn)`
+Recovers from errors.
+
+#### `.map(fn)`
+Transforms the result.
+
+#### `.isOk()` / `.isErr()`
+Type guards for success/error.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+MIT © [License](https://github.com/jordyfontoura/tryless/blob/main/LICENSE)
+
+## 🌟 Show Your Support
+
+If you find Tryless helpful, please consider:
+- ⭐ Starring the repo on GitHub
+- 🐦 Sharing it on Twitter
+- 📝 Writing about it on your blog
+
+---
+
+<div align="center">
+  <p>Made with ❤️ by developers who hate try-catch hell</p>
+  <p>
+    <a href="https://github.com/jordyfontoura/tryless">GitHub</a> •
+    <a href="https://www.npmjs.com/package/tryless">npm</a> •
+    <a href="https://github.com/jordyfontoura/tryless/issues">Issues</a>
+  </p>
+</div>
