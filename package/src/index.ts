@@ -1,7 +1,9 @@
-import * as result from './result';
+import * as errors from './errors';
+import * as functions from './functions';
 
-export * from './result';
-
+export * from './errors';
+export * from './functions';
 export default {
-  ...result,
+  ...errors,
+  ...functions,
 }
