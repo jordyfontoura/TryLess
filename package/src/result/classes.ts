@@ -200,7 +200,8 @@ export class Ok<T = undefined> extends Result<true> {
    * @template U - Type of the default value (unused)
    * @returns The data contained in this result
    */
-  public unwrapOr<U>(): this extends { data: infer J } ? J : U {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public unwrapOr<U>(_defaultValue: U): this extends { data: infer J } ? J : U {
     return this.data as unknown as this extends { data: infer J } ? J : U;
   }
 
@@ -211,7 +212,8 @@ export class Ok<T = undefined> extends Result<true> {
    * @template U - Type of the computed value (unused)
    * @returns The data contained in this result
    */
-  public unwrapOrElse<U>(): this extends { data: infer J } ? J : U {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public unwrapOrElse<U>(_defaultValue: (result: this extends { success: false } ? this : never) => U): this extends { data: infer J } ? J : U {
     return this.data as unknown as this extends { data: infer J } ? J : U;
   }
 
@@ -291,7 +293,8 @@ export class Ok<T = undefined> extends Result<true> {
    * @template R - Type of the alternative result (unused)
    * @returns This result
    */
-  public or<R extends IUnknownOkErr>(): this extends { success: false; } ? R : this {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public or<R extends IUnknownOkErr>(_result: R): this extends { success: false; } ? R : this {
     return this as this extends { success: false; } ? R : this;
   }
 
@@ -302,7 +305,8 @@ export class Ok<T = undefined> extends Result<true> {
    * @template R - Type of result from recovery (unused)
    * @returns This result
    */
-  public orElse<R extends IUnknownErr>(): this extends { error: string; } ? R : this {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public orElse<R extends IUnknownErr>(_fn: (errorResult: this extends { error: infer J; } ? J : never) => R): this extends { error: string; } ? R : this {
     return this as this extends { error: string; } ? R : this;
   }
 
@@ -416,7 +420,8 @@ export class Err<E extends string, R = undefined> extends Result<false> {
    * @template U - Type of the default value (unused)
    * @returns This error result
    */
-  public unwrapErrOr<U>(): this extends { error: string; } ? this : U {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public unwrapErrOr<U>(_defaultValue: U): this extends { error: string; } ? this : U {
     return this as this extends { error: string; } ? this : U;
   }
 
@@ -427,7 +432,8 @@ export class Err<E extends string, R = undefined> extends Result<false> {
    * @template U - Type of the computed value (unused)
    * @returns This error result
    */
-  public unwrapErrOrElse<U>(): this extends { error: string; } ? this : U {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public unwrapErrOrElse<U>(_defaultValue: (result: this extends { success: true } ? this : never) => U): this extends { error: string; } ? this : U {
     return this as this extends { error: string; } ? this : U;
   }
 
@@ -456,7 +462,8 @@ export class Err<E extends string, R = undefined> extends Result<false> {
    * @template R - Type of the alternative result (unused)
    * @returns This error result
    */
-  public and<R extends IUnknownOkErr>(): this extends { success: true; } ? R : this {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public and<R extends IUnknownOkErr>(_result: R): this extends { success: true; } ? R : this {
     return this as this extends { success: true; } ? R : this;
   }
 
@@ -467,7 +474,8 @@ export class Err<E extends string, R = undefined> extends Result<false> {
    * @template U - Type of result from function (unused)
    * @returns This error result
    */
-  public andThen<U extends IUnknownOkErr>(): this extends { data: unknown; } ? U : this {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public andThen<U extends IUnknownOkErr>(_fn: (data: this extends { data: infer J; } ? J : never) => U): this extends { data: unknown; } ? U : this {
     return this as this extends { data: unknown; } ? U : this;
   }
 
