@@ -1,8 +1,8 @@
-import { err, ok, prettifyResult, resultfy } from 'tryless'
+import { err, ok, resultfy } from 'tryless'
 import { z } from 'zod'
 import { writeFileSync } from 'fs';
 
-const apiURL = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/btc.json';
+const apiURL = 'https://cdn.jsdselivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/btc.json';
 const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 
@@ -12,14 +12,14 @@ const bitcoinSchema = z.object({
   })
 }).transform((data) => data.btc.usd);
 
-const safeFetch = resultfy(fetch);
-const safeWriteFile = resultfy(writeFileSync);
+const safeFetch = resultfy(fetch, 'fetch:fetch-error');
+const safeWriteFile = resultfy(writeFileSync, 'fs:write-file-error');
 
 async function getBitcoinPrice() {
   const responseResult = await safeFetch(apiURL);
 
   if (!responseResult.success) {
-    return err('bitcoin:fetch-error', responseResult.reason);
+    return responseResult;
   }
 
   const response = responseResult.data
@@ -65,7 +65,7 @@ async function getBitcoinPrice() {
   const writeFileResult = safeWriteFile('price.txt', price.toString());
 
   if (!writeFileResult.success) {
-    return err('bitcoin:write-file-error', writeFileResult.reason);
+    return writeFileResult;
   }
 
   return ok(price);
@@ -73,14 +73,21 @@ async function getBitcoinPrice() {
 
 async function main() {
   const bitcoinResult = await getBitcoinPrice();
-  if (!bitcoinResult.success) {
-    console.error(bitcoinResult);
-    return;
+
+  const priceResult = bitcoinResult
+
+  if (priceResult.isErr()) {
+    return priceResult;
   }
 
-  const price = bitcoinResult.data
+  const price = priceResult
+    .unwrap();
 
-  console.log(`Bitcoin price: ${currencyFormatter.format(price)}`);
+
+  console.log(`Bitcoin price: ${price}`);
 }
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

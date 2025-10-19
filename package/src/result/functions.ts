@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { UnknownError, ResultError, UnwrapError, Err, ErrReason, Ok, OkData } from './errors';
+import { UnknownError, ResultError, UnwrapErrorName, Err, ErrReason, Ok, OkData } from './errors';
 import type { IUnknownError } from './errors';
 import type {
   IEmptyFailure,
@@ -16,7 +16,7 @@ import type {
   IPickResultFailure,
 } from './types';
 
-const None = Symbol("None") as unknown;
+export const None = Symbol("None") as unknown;
 
 /**
  * Create an empty success result.
@@ -61,14 +61,14 @@ export function err<E extends string, C = never>(
   reason: C = None as C
 ): Err<E> | ErrReason<E, C> | Err<IUnknownError> {
   if (error === None) {
-    return new Err<IUnknownError>(UnknownError)
+    return new Err<IUnknownError>(UnknownError, err)
   }
 
   if (reason === None) {
-    return new Err<E>(error);
+    return new Err<E>(error, err);
   }
 
-  return new ErrReason<E, C>(error, reason);
+  return new ErrReason<E, C>(error, reason, err);
 }
 
 /**
@@ -135,7 +135,9 @@ export function okFulfilled<T, R = T>(map: (data: T) => R): (data: T) => OkData<
  * ```
  */
 export function errReject<E extends string>(error: E): (reason: unknown) => ErrReason<E, unknown> {
-  return (reason) => err(error, reason);
+  return function rejectWrapper(reason) {
+    return new ErrReason<E, unknown>(error, reason, rejectWrapper);
+  };
 }
 
 /**
@@ -152,10 +154,10 @@ export function errReject<E extends string>(error: E): (reason: unknown) => ErrR
 export function resultfy<F extends Promise<any>>(
   fn: F
 ): Promise<OkData<Awaited<F>> | ErrReason<IUnknownError, unknown>>;
-export function resultfy<F extends Promise<any>, E extends { success: false }>(
+export function resultfy<F extends Promise<any>, E extends string>(
   fn: F,
-  onReject: (reason: unknown) => E
-): Promise<OkData<Awaited<F>> | E>;
+  error: E
+): Promise<OkData<Awaited<F>> | ErrReason<E, unknown>>;
 export function resultfy<F extends (...args: any) => any>(
   fn: F
 ): ReturnType<F> extends never
@@ -167,38 +169,39 @@ export function resultfy<F extends (...args: any) => any>(
   : (...args: Parameters<F>) => OkData<ReturnType<F>> | ErrReason<IUnknownError, unknown>;
 export function resultfy<
   F extends (...args: any) => any,
-  E extends { success: false }
+  E extends string
 >(
   fn: F,
-  onReject: (reason: unknown) => E
+  error: E
 ): ReturnType<F> extends never
-  ? (...args: Parameters<F>) => E
+  ? (...args: Parameters<F>) => ErrReason<E, unknown>
   : ReturnType<F> extends Promise<never>
-  ? (...args: Parameters<F>) => Promise<E>
+  ? (...args: Parameters<F>) => Promise<ErrReason<E, unknown>>
   : ReturnType<F> extends Promise<infer U>
-  ? (...args: Parameters<F>) => Promise<OkData<U> | E>
-  : (...args: Parameters<F>) => OkData<ReturnType<F>> | E;
-export function resultfy<F, E extends { success: false }>(
+  ? (...args: Parameters<F>) => Promise<OkData<U> | ErrReason<E, unknown>>
+  : (...args: Parameters<F>) => OkData<ReturnType<F>> | ErrReason<E, unknown>;
+export function resultfy<F, E extends string>(
   fn: F,
-  onReject?: (reason: unknown) => E
+  fnError?: E
 ): any {
+  const error = fnError ?? UnknownError;
   if (fn instanceof Promise) {
-    return fn.then(ok, onReject || (errReject(UnknownError) as any));
+    return fn.then(ok, errReject(error));
   }
 
   if (typeof fn !== "function") {
     throw new Error("fn must be a function or a promise");
   }
 
-  return ((...args: any) => {
+  return (function wrapper(...args: any) {
     try {
       const result = (fn as (...args: any[]) => any)(...args);
       if (result instanceof Promise) {
-        return result.then(ok, onReject || (errReject(UnknownError) as any));
+        return result.then(ok, (reason) => new ErrReason<string, unknown>(error, reason, wrapper));
       }
       return ok(result);
     } catch (reason) {
-      return onReject ? onReject(reason) : err(UnknownError, reason);
+      return new ErrReason<string, unknown>(error, reason, wrapper);
     }
   }) as any;
 }
@@ -220,7 +223,7 @@ export function unwrap<T extends IUnknownResult, U = IUnwrapResult<T>>(result: T
     if ('data' in result) {
       return (result as { data: U }).data;
     }
-    throw new ResultError({ success: false, error: UnwrapError, reason: result.data });
+    throw new ResultError({ success: false, error: UnwrapErrorName, reason: result.data });
   }
 
   if (defaultValue !== None) {
