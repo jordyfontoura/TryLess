@@ -40,6 +40,9 @@ jobs:
       - name: Build package
         run: pnpm --filter tryless build
 
+      - name: Copy README to package
+        run: cp README.md package/README.md
+
       - name: Publish to NPM
         working-directory: ./package
         run: npm publish --provenance --access public

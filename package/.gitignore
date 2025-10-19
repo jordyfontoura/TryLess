@@ -37,3 +37,6 @@ logs/
 # Miscellaneous
 .DS_Store
 Thumbs.db
+
+# Copied from root (generated before publish)
+README.md

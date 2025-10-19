@@ -64,8 +64,9 @@ The GitHub Action will automatically:
 1. ✅ Run linter
 2. ✅ Run tests
 3. ✅ Build the package
-4. ✅ Publish to npm
-5. ✅ Create GitHub Release
+4. ✅ Copy README.md from root to package directory
+5. ✅ Publish to npm
+6. ✅ Create GitHub Release
 
 You can monitor the progress at:
 `https://github.com/jordyfontoura/tryless/actions`
@@ -164,6 +165,7 @@ git push origin v1.5.0
 4. **Don't delete published versions** - increment instead
 5. **Monitor the workflow** to catch issues early
 6. **Update documentation** when adding new features
+7. **Edit README.md in the root**, not in `package/` (it's auto-copied)
 
 ## 🔗 Useful Links
 
