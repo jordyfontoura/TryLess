@@ -1,5 +1,6 @@
 import type { IUnknownOkErr } from './result/types';
 import { UnwrapErrorName } from './result/constants';
+import { isNodeEnvironment, inspect } from './runtime';
 
 /**
  * Error thrown when attempting to unwrap a Result that contains an error,
@@ -33,6 +34,8 @@ export class UnwrapError extends Error {
    */
   public reason?: unknown;
 
+  public resultStack?: string;
+
   /**
    * Creates a new UnwrapError instance.
    *
@@ -47,7 +50,7 @@ export class UnwrapError extends Error {
     const error = customError || ('error' in result ? result.error : UnwrapErrorName);
     message += ` '${error}'`
     const obj: { stack?: string } = {}
-    if ("captureStackTrace" in Error) {
+    if ("captureStackTrace" in Error && typeof Error.captureStackTrace === 'function') {
       Error.captureStackTrace(obj, caller);
     }
     message += obj.stack?.replace('Error\n', '\n');
@@ -66,5 +69,38 @@ export class UnwrapError extends Error {
 
     this.name = "UnwrapError";
   }
-}
 
+  /**
+   * Custom inspect function for Node.js util.inspect.
+   * Provides detailed error information including the reason when available.
+   * Falls back to simple message in browser environments.
+   *
+   * @param depth - Current inspection depth
+   * @param opts - Inspection options
+   * @returns Formatted error message with reason details
+   */
+  [Symbol.for('nodejs.util.inspect.custom')](depth: number, opts: { depth: number | null }) {
+    if (depth < 0) {
+      return this.message;
+    }
+
+    let msg = this.message;
+
+    if (this.reason) {
+      if (isNodeEnvironment && inspect) {
+        // Node.js environment - use util.inspect
+        const newOpts = { ...opts, depth: opts.depth === null ? null : opts.depth - 1 };
+        msg += `\n\nReason ${inspect(this.reason, newOpts)}`;
+      } else {
+        // Browser environment - use JSON.stringify fallback
+        try {
+          msg += `\n\nReason ${JSON.stringify(this.reason, null, 2)}`;
+        } catch {
+          msg += `\n\nReason ${String(this.reason)}`;
+        }
+      }
+    }
+
+    return msg;
+  }
+}

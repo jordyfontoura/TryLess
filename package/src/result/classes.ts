@@ -363,7 +363,7 @@ export class Err<E extends string, R = undefined> extends Result<false> {
   constructor(error: E, reason: R, caller?: (...args: unknown[]) => unknown) {
     super(false);
 
-    if ("captureStackTrace" in Error) {
+    if ("captureStackTrace" in Error && typeof Error.captureStackTrace === 'function') {
       Error.captureStackTrace(this, caller || this.constructor);
     }
 
