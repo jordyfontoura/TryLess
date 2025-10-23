@@ -1,4 +1,3 @@
-import { inspect } from 'util';
 import type { IUnknownOkErr } from './result/types';
 import { UnwrapErrorName } from './result/constants';
 
@@ -66,26 +65,6 @@ export class UnwrapError extends Error {
     }
 
     this.name = "UnwrapError";
-  }
-
-  /**
-   * Custom inspect function for Node.js util.inspect.
-   * Provides detailed error information including the reason when available.
-   *
-   * @param depth - Current inspection depth
-   * @param opts - Inspection options
-   * @returns Formatted error message with reason details
-   */
-  [Symbol.for('nodejs.util.inspect.custom')](depth: number, opts: { depth: number | null }) {
-    if (depth < 0) {
-      return this.message;
-    }
-    let msg = this.message;
-    if (this.reason) {
-      const newOpts = { ...opts, depth: opts.depth === null ? null : opts.depth - 1 };
-      msg += `\n\nReason ${inspect(this.reason, newOpts)}`;
-    }
-    return msg;
   }
 }
 
