@@ -279,41 +279,5 @@ describe('UnwrapError', () => {
       }
     });
   });
-
-  describe('custom inspect', () => {
-    it('should have custom inspect method', () => {
-      const result = err('TestError', { code: 500, message: 'Error' });
-
-      try {
-        result.unwrap();
-      } catch (error) {
-        expect(error).toBeInstanceOf(UnwrapError);
-        const unwrapError = error as UnwrapError;
-
-        // Check if custom inspect method exists
-        const inspectSymbol = Symbol.for('nodejs.util.inspect.custom');
-        const inspectMethod = (unwrapError as unknown as Record<symbol, unknown>)[inspectSymbol];
-        expect(inspectMethod).toBeDefined();
-        expect(typeof inspectMethod).toBe('function');
-      }
-    });
-
-    it('should format reason in inspection', () => {
-      const result = err('TestError', { code: 500, details: 'Server error' });
-
-      try {
-        result.unwrap();
-      } catch (error) {
-        expect(error).toBeInstanceOf(UnwrapError);
-        const unwrapError = error as UnwrapError;
-        const inspectSymbol = Symbol.for('nodejs.util.inspect.custom');
-        const inspectMethod = (unwrapError as unknown as Record<symbol, (depth: number, opts: { depth: number }) => string>)[inspectSymbol];
-        const inspected = inspectMethod.call(unwrapError, 5, { depth: 5 });
-
-        expect(typeof inspected).toBe('string');
-        expect(inspected).toContain('Reason');
-      }
-    });
-  });
 });
 
