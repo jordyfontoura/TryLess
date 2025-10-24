@@ -14,7 +14,7 @@ export default defineConfig({
         },
       ],
     },
-    include: ['./**/*.spec.ts'],
+    include: ['./e2e/browser/**/*.spec.ts', './e2e/shared/**/*.spec.ts'],
   },
 });
 
