@@ -5,6 +5,10 @@ import {
   type IOkDataOf,
   type IErrOf,
   type IErrReasonOf,
+  type IUnknownError,
+  type IUnknownOk,
+  type IUnknownErr,
+  type IUnknownOkErr,
   type Err,
   type Ok,
 } from '../../src';
@@ -184,6 +188,153 @@ describe('Type utility composition', () => {
       field: string;
       message: string;
     }>();
+  });
+});
+
+describe('IUnknownError type', () => {
+  test('should be literal string type "unknown"', () => {
+    expectTypeOf<IUnknownError>().toEqualTypeOf<'unknown'>();
+  });
+
+  test('should be assignable to string', () => {
+    expectTypeOf<IUnknownError>().toMatchTypeOf<string>();
+  });
+});
+
+describe('IUnknownOk type', () => {
+  test('should have success property as true', () => {
+    type SuccessValue = IUnknownOk['success'];
+    expectTypeOf<SuccessValue>().toEqualTypeOf<true>();
+  });
+
+  test('should have data property as unknown', () => {
+    type DataValue = IUnknownOk['data'];
+    expectTypeOf<DataValue>().toEqualTypeOf<unknown>();
+  });
+
+  test('should match object structure', () => {
+    expectTypeOf<IUnknownOk>().toMatchTypeOf<{
+      success: true;
+      data: unknown;
+    }>();
+  });
+
+  test('should be compatible with Ok result types', () => {
+    const okResult: IUnknownOk = {
+      success: true,
+      data: 'anything',
+    };
+    expectTypeOf(okResult).toMatchTypeOf<IUnknownOk>();
+  });
+});
+
+describe('IUnknownErr type', () => {
+  test('should have success property as false', () => {
+    type SuccessValue = IUnknownErr['success'];
+    expectTypeOf<SuccessValue>().toEqualTypeOf<false>();
+  });
+
+  test('should have error property as string', () => {
+    type ErrorValue = IUnknownErr['error'];
+    expectTypeOf<ErrorValue>().toEqualTypeOf<string>();
+  });
+
+  test('should have reason property as unknown', () => {
+    type ReasonValue = IUnknownErr['reason'];
+    expectTypeOf<ReasonValue>().toEqualTypeOf<unknown>();
+  });
+
+  test('should have optional stack property', () => {
+    type StackValue = IUnknownErr['stack'];
+    expectTypeOf<StackValue>().toEqualTypeOf<string | undefined>();
+  });
+
+  test('should match object structure', () => {
+    expectTypeOf<IUnknownErr>().toMatchTypeOf<{
+      success: false;
+      error: string;
+      reason: unknown;
+      stack?: string;
+    }>();
+  });
+
+  test('should be compatible with Err result types', () => {
+    const errResult: IUnknownErr = {
+      success: false,
+      error: 'TestError',
+      reason: 'Some reason',
+    };
+    expectTypeOf(errResult).toMatchTypeOf<IUnknownErr>();
+  });
+
+  test('should accept stack property', () => {
+    const errWithStack: IUnknownErr = {
+      success: false,
+      error: 'TestError',
+      reason: 'Some reason',
+      stack: 'Error stack trace...',
+    };
+    expectTypeOf(errWithStack).toMatchTypeOf<IUnknownErr>();
+  });
+});
+
+describe('IUnknownOkErr type', () => {
+  test('should be union of IUnknownOk and IUnknownErr', () => {
+    expectTypeOf<IUnknownOkErr>().toEqualTypeOf<IUnknownOk | IUnknownErr>();
+  });
+
+  test('should accept IUnknownOk', () => {
+    const okResult: IUnknownOk = {
+      success: true,
+      data: 42,
+    };
+    expectTypeOf(okResult).toMatchTypeOf<IUnknownOkErr>();
+  });
+
+  test('should accept IUnknownErr', () => {
+    const errResult: IUnknownErr = {
+      success: false,
+      error: 'TestError',
+      reason: 'Test reason',
+    };
+    expectTypeOf(errResult).toMatchTypeOf<IUnknownOkErr>();
+  });
+
+  test('should allow narrowing by success property', () => {
+    function testNarrowing(result: IUnknownOkErr) {
+      if (result.success) {
+        // Should narrow to IUnknownOk
+        expectTypeOf(result).toMatchTypeOf<IUnknownOk>();
+        expectTypeOf(result.data).toEqualTypeOf<unknown>();
+      } else {
+        // Should narrow to IUnknownErr
+        expectTypeOf(result).toMatchTypeOf<IUnknownErr>();
+        expectTypeOf(result.error).toEqualTypeOf<string>();
+      }
+    }
+
+    const okResult: IUnknownOkErr = { success: true, data: 'test' };
+    const errResult: IUnknownOkErr = { success: false, error: 'Error', reason: 'Reason' };
+
+    testNarrowing(okResult);
+    testNarrowing(errResult);
+  });
+
+  test('should be useful for generic result handlers', () => {
+    function handleGenericResult(result: IUnknownOkErr): void {
+      if (result.success) {
+        expectTypeOf(result.data).toEqualTypeOf<unknown>();
+      } else {
+        expectTypeOf(result.error).toEqualTypeOf<string>();
+        expectTypeOf(result.reason).toEqualTypeOf<unknown>();
+      }
+    }
+
+    const okResult: IUnknownOk = { success: true, data: 1 };
+    const errResult: IUnknownErr = { success: false, error: 'Error', reason: 'Reason' };
+
+    handleGenericResult(okResult);
+    handleGenericResult(errResult);
   });
 });
 
