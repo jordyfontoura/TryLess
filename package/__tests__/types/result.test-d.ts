@@ -176,7 +176,7 @@ describe('Method return types', () => {
     const result = ok(42);
     const mapped = result.map((data) => data.toString());
 
-    expectTypeOf(mapped).toMatchTypeOf<Ok<string>>();
+    expectTypeOf(mapped).toEqualTypeOf<string>();
   });
 });
 
