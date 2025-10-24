@@ -1,4 +1,5 @@
 import { errReject, ok } from '../../src';
+import { describe, it, expect } from 'vitest';
 
 /**
  * Tests for the errReject helper function

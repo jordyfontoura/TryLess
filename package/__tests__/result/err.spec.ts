@@ -1,4 +1,5 @@
 import { err } from '../../src';
+import { describe, it, expect, vi } from 'vitest';
 
 /**
  * Tests for the err function and Err class
@@ -61,7 +62,7 @@ describe('err function', () => {
 
     it('should unwrapOrElse and compute default value', () => {
       const result = err('NotFound', 'User not found');
-      const fallback = jest.fn((r) => `Error: ${r.error}`);
+      const fallback = vi.fn((r) => `Error: ${r.error}`);
       const data = result.unwrapOrElse(fallback);
 
       expect(data).toBe('Error: NotFound');
@@ -84,7 +85,7 @@ describe('err function', () => {
 
     it('should unwrapErrOrElse and return itself', () => {
       const result = err('NotFound');
-      const fallback = jest.fn(() => 'fallback');
+      const fallback = vi.fn(() => 'fallback');
       const value = result.unwrapErrOrElse(fallback);
 
       expect(value).toBe(result);
@@ -124,7 +125,7 @@ describe('err function', () => {
 
     it('should return itself with andThen()', () => {
       const result = err('Error1');
-      const fn = jest.fn(() => err('Error2'));
+      const fn = vi.fn(() => err('Error2'));
       const combined = result.andThen(fn);
 
       expect(combined).toBe(result);
@@ -141,7 +142,7 @@ describe('err function', () => {
 
     it('should apply function with orElse()', () => {
       const result = err('Error1');
-      const fallback = jest.fn(() => err('Error2'));
+      const fallback = vi.fn(() => err('Error2'));
       const combined = result.orElse(fallback);
 
       expect(combined.success).toBe(false);

@@ -1,10 +1,6 @@
 import { ok, err } from '../../src';
+import { describe, it, expect } from 'vitest';
 
-/**
- * Helper function to assert types at compile time
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function assertType<T>(_value: T) { }
 
 /**
  * Tests for type inference and type safety

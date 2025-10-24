@@ -1,4 +1,5 @@
 import { ok, err } from '../../src';
+import { describe, it, expect, vi } from 'vitest';
 
 /**
  * Tests for the ok function and Ok class
@@ -64,7 +65,7 @@ describe('ok function', () => {
 
     it('should unwrapOrElse and return data without calling function', () => {
       const result = ok(42);
-      const fallback = jest.fn(() => 0);
+      const fallback = vi.fn(() => 0);
       const data = result.unwrapOrElse(fallback);
 
       expect(data).toBe(42);
@@ -87,7 +88,7 @@ describe('ok function', () => {
 
     it('should unwrapErrOrElse and call function', () => {
       const result = ok(42);
-      const fallback = jest.fn(() => 'fallback');
+      const fallback = vi.fn(() => 'fallback');
       const value = result.unwrapErrOrElse(fallback);
 
       expect(value).toBe('fallback');
@@ -130,7 +131,7 @@ describe('ok function', () => {
 
     it('should return itself with orElse()', () => {
       const result = ok(42);
-      const fallback = jest.fn(() => err('fallback'));
+      const fallback = vi.fn(() => err('fallback'));
       const combined = result.orElse(fallback);
 
       expect(combined).toBe(result);

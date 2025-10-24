@@ -1,4 +1,5 @@
 import { ok, err, resultfy } from '../../src';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 /**
  * Real-world example: User creation with validation

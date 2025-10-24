@@ -1,4 +1,6 @@
 import { ok, err, UnwrapError } from '../src';
+import { vi } from 'vitest';
+import { expect, it, describe } from 'vitest';
 
 /**
  * Tests for the UnwrapError class
@@ -204,7 +206,7 @@ describe('UnwrapError', () => {
 
     it('should work with console.log', () => {
       const result = err('NotFound', 'User not found');
-      const consoleError = jest.spyOn(console, 'error').mockImplementation();
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       try {
         result.unwrap();
