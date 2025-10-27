@@ -16,6 +16,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Validate tag format
+        id: tag-info
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          
+          # Remove 'v' prefix for version comparison
+          VERSION=${TAG#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          # Validate semantic versioning format
+          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?(\+[a-zA-Z0-9.]+)?$ ]]; then
+            echo "Error: Tag must follow semantic versioning (e.g., v1.0.0)"
+            exit 1
+          fi
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -31,17 +47,75 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Verify package.json version matches tag
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package/package.json').version")
+          TAG_VERSION="${{ steps.tag-info.outputs.version }}"
+          
+          if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+            echo "Error: package.json version ($PACKAGE_VERSION) does not match tag version ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "✅ Version validation passed: $PACKAGE_VERSION"
+
+      - name: Verify CHANGELOG entry exists
+        run: |
+          TAG_VERSION="${{ steps.tag-info.outputs.version }}"
+          
+          if ! grep -q "## \[$TAG_VERSION\]" CHANGELOG.md && ! grep -q "## $TAG_VERSION" CHANGELOG.md; then
+            echo "⚠️  Warning: No CHANGELOG entry found for version $TAG_VERSION"
+            echo "Please update CHANGELOG.md before publishing"
+            exit 1
+          fi
+          echo "✅ CHANGELOG entry found for version $TAG_VERSION"
+
       - name: Run linter
         run: pnpm --filter tryless lint
 
-      - name: Run tests
-        run: pnpm --filter tryless test
+      - name: Check types
+        run: pnpm --filter tryless exec tsc --noEmit
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(pnpm --filter tryless list @playwright/test --depth=0 --json | jq -r '.[0].version')" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter tryless exec playwright install --with-deps chromium
+
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter tryless exec playwright install-deps chromium
 
       - name: Build package
         run: pnpm --filter tryless build
 
+      - name: Run tests
+        run: pnpm --filter tryless test
+
       - name: Copy README to package
         run: cp README.md package/README.md
+
+      - name: Verify package contents
+        working-directory: ./package
+        run: |
+          echo "📦 Package contents:"
+          ls -la
+          echo ""
+          echo "📄 Dist files:"
+          ls -la dist/
+          echo ""
+          if [ ! -f "README.md" ]; then
+            echo "Error: README.md not found in package directory"
+            exit 1
+          fi
 
       - name: Publish to NPM
         working-directory: ./package
@@ -61,7 +135,7 @@ jobs:
             ## 📦 Installation
             
             ```bash
-            npm install tryless@${{ github.ref_name }}
+            npm install tryless@${{ steps.tag-info.outputs.version }}
             ```
             
             ## 📚 Documentation

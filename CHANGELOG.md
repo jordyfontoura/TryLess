@@ -5,12 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.5.3] - 2025-10-27
 
 ### Added
-- Comprehensive documentation in README
-- GitHub Actions workflows for CI/CD
-- Publishing guide for contributors
+- `IResult` type for type-safe result handling with success and error types
+- Runtime module for Node.js environment detection
+- Custom inspect function for `UnwrapError` with Node.js support
+- Tests for `IUnknownError`, `IUnknownOk`, `IUnknownErr`, and `IUnknownOkErr` type utilities
+- TypeScript configuration for test types with type-checking capabilities
+- Comprehensive test script in package.json covering unit, integration, and type tests
+- Version validation in publish workflow (ensures package.json matches git tag)
+- CHANGELOG entry verification before publishing
+- Type checking step in publish workflow
+- Automated test results upload on failure for easier debugging
+- CI success job for better branch protection integration
+- Playwright browser caching in both CI and publish workflows
+- Playwright browser installation step in CI workflow
+
+### Changed
+- Migrated testing framework from Jest to Vitest for better performance and DX
+- Optimized CI workflow with parallel job execution (lint, typecheck, and tests run simultaneously)
+- Added multi-version Node.js testing (Node 18, 20, and 22) to ensure compatibility across LTS versions
+- Implemented intelligent Playwright browser cache to reduce CI execution time
+- Enhanced publish workflow with comprehensive validation steps
+- Reordered test execution in CI workflow for improved clarity and consistency
+- Updated Playwright browser installation to use pnpm filter for better dependency management
+- Configured Turbo for test dependencies
+
+### Fixed
+- Updated Vitest configuration to include specific test directories for better test organization
+- Improved type annotations in unwrap-error tests for enhanced type safety
 
 ## [1.4.3] - 2024-XX-XX
 
