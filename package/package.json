@@ -68,10 +68,24 @@
   },
   "keywords": [
     "result",
-    "error",
+    "result-type",
     "error-handling",
-    "typed-error",
-    "rust",
-    "typescript"
+    "type-safe",
+    "typescript",
+    "rust-inspired",
+    "functional-programming",
+    "railway-oriented",
+    "async-error-handling",
+    "promise",
+    "no-throw",
+    "either",
+    "option",
+    "monad",
+    "error-management",
+    "exception-handling",
+    "fp",
+    "functional",
+    "nodejs",
+    "zero-dependencies"
   ]
 }
