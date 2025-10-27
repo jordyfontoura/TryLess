@@ -80,15 +80,15 @@ export type IUnknownOkErr = IUnknownOk | IUnknownErr;
  * @example
  * ```ts
  * // Using IUnknownErr for generic error handling
+ * import { resultfy } from 'tryless';
+ * 
  * type GenericResult = IResult<Data, IUnknownErr>;
  *
- * function fetchData(url: string): GenericResult {
- *   try {
- *     const data = fetch(url);
- *     return ok(data);
- *   } catch (error) {
- *     return err('FetchError', error);
- *   }
+ * async function fetchData(url: string): Promise<GenericResult> {
+ *   return resultfy(
+ *     fetch(url).then(r => r.json()),
+ *     'FetchError'
+ *   );
  * }
  * ```
  */

@@ -5,11 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.5] - 2025-10-27
+
+### Changed
+- Migrated documentation examples from `.then(ok, errReject())` pattern to `resultfy()` for improved readability
+
+### Documentation
+- Refactored all promise handling examples to use `resultfy()` as the recommended approach
+- Added comparison highlighting benefits of `resultfy()` over `.then(ok, errReject())`
+- Enhanced `resultfy` section with best practices and clearer examples
+- Maintained `errReject` documentation for complex promise chain scenarios
+- Updated JSDoc docstrings in source code:
+  - `resultfy`: Marked as "Recommended approach" with improved examples showing custom error messages
+  - `errReject`: Added note to prefer `resultfy()` for simple cases, with comparison examples
+  - `IResult` type: Updated example to use `resultfy()` instead of try-catch pattern
+
 ## [1.5.4] - 2025-10-27
 
 ### Changed
 - Enhanced NPM keywords for better package discoverability and SEO optimization
 - Added strategic keywords: `result-type`, `type-safe`, `functional-programming`, `railway-oriented`, `async-error-handling`, `promise`, `no-throw`, `either`, `option`, `monad`, `error-management`, `exception-handling`, `fp`, `functional`, `nodejs`, `zero-dependencies`
+- Updated package description from generic to more compelling: "Type-safe error handling for TypeScript without try-catch hell"
 
 ### Documentation
 - Improved package metadata to increase visibility in NPM search results
@@ -65,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Examples for common use cases
 - Integration examples with Zod validation
 
-[Unreleased]: https://github.com/jordyfontoura/tryless/compare/v1.5.4...HEAD
+[Unreleased]: https://github.com/jordyfontoura/tryless/compare/v1.5.5...HEAD
+[1.5.5]: https://github.com/jordyfontoura/tryless/compare/v1.5.4...v1.5.5
 [1.5.4]: https://github.com/jordyfontoura/tryless/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/jordyfontoura/tryless/compare/v1.4.3...v1.5.3
 [1.4.3]: https://github.com/jordyfontoura/tryless/releases/tag/v1.4.3

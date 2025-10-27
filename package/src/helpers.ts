@@ -39,7 +39,9 @@ export function okFulfilled<T, R = T>(map: (data: T) => R): (data: T) => Ok<R> {
 
 /**
  * Creates a curried error factory that wraps rejection reasons in error results.
- * Particularly useful for converting promise rejections to error results.
+ * Particularly useful for converting promise rejections in complex chains.
+ *
+ * **Note:** For simple promise wrapping, prefer `resultfy()` which is more concise.
  *
  * @template E - String literal type for the error identifier
  * @param error - The error identifier to use for all rejections
@@ -47,21 +49,24 @@ export function okFulfilled<T, R = T>(map: (data: T) => R): (data: T) => Ok<R> {
  *
  * @example
  * ```ts
- * import { errReject, ok } from 'tryless';
+ * import { errReject, ok, resultfy } from 'tryless';
  *
  * // Basic usage
  * const onReject = errReject('FetchError');
  * const result = onReject('Network down');
  * // { success: false, error: 'FetchError', reason: 'Network down' }
  *
- * // Use in promise chains to convert rejections
+ * // Use in complex promise chains
  * const userResult = await fetch('https://api.example.com/user')
- *   .then(ok, errReject('user:fetch-error'));
+ *   .then(ok, errReject('user:fetch-error'))
+ *   .then(res => res.success ? res.data.json() : res)
+ *   .then(ok, errReject('user:parse-error'));
  *
- * if (!userResult.success) {
- *   console.log(userResult.error); // 'user:fetch-error'
- *   console.log(userResult.reason); // rejection reason
- * }
+ * // For simpler cases, prefer resultfy:
+ * const userResult = await resultfy(
+ *   fetch('https://api.example.com/user'),
+ *   'user:fetch-error'
+ * );
  * ```
  */
 export function errReject<E extends string>(error: E): (reason: unknown) => Err<E, unknown> {
@@ -74,17 +79,33 @@ export function errReject<E extends string>(error: E): (reason: unknown) => Err<
  * Wraps a function or promise to always return a result instead of throwing.
  * Converts both synchronous throws and promise rejections into error results.
  *
+ * **Recommended approach** for wrapping promises and functions. More concise than `.then(ok, errReject())`.
+ *
  * **For Promises:** Wraps a promise to return Ok on fulfillment or Err on rejection.
  *
  * **For Functions:** Returns a wrapped version that catches errors and returns results.
  *
  * @template F - Type of the function or promise to wrap
  * @param fn - The function or promise to wrap
+ * @param error - Optional custom error identifier (defaults to 'unknown')
  * @returns Wrapped version that returns Result types
  *
  * @example
  * ```ts
  * import { resultfy } from 'tryless';
+ *
+ * // Wrap a promise with custom error message (most common use case)
+ * const userResult = await resultfy(
+ *   fetch('https://api.example.com/user').then(r => r.json()),
+ *   'user:fetch-error'
+ * );
+ *
+ * if (userResult.success) {
+ *   console.log(userResult.data); // user data
+ * } else {
+ *   console.log(userResult.error); // 'user:fetch-error'
+ *   console.log(userResult.reason); // rejection reason
+ * }
  *
  * // Wrap a synchronous function
  * const divide = (a: number, b: number) => {
@@ -92,25 +113,12 @@ export function errReject<E extends string>(error: E): (reason: unknown) => Err<
  *   return a / b;
  * };
  *
- * const safeDivide = resultfy(divide);
+ * const safeDivide = resultfy(divide, 'division-error');
  * const result1 = safeDivide(10, 2);
  * // { success: true, data: 5 }
  *
  * const result2 = safeDivide(10, 0);
- * // { success: false, error: 'unknown', reason: Error('Division by zero') }
- *
- * // Wrap a promise
- * const fetchUser = resultfy(
- *   fetch('https://api.example.com/user').then(r => r.json())
- * );
- *
- * const userResult = await fetchUser;
- * if (userResult.success) {
- *   console.log(userResult.data); // user data
- * } else {
- *   console.log(userResult.error); // 'unknown'
- *   console.log(userResult.reason); // rejection reason
- * }
+ * // { success: false, error: 'division-error', reason: Error('Division by zero') }
  * ```
  */
 /**
