@@ -42,11 +42,11 @@ jobs:
       - name: Run linter
         run: pnpm --filter tryless lint
 
-      - name: Run tests
-        run: pnpm --filter tryless test
-
       - name: Build package
         run: pnpm --filter tryless build
+
+      - name: Run tests
+        run: pnpm --filter tryless test
 
       - name: Check types
         run: pnpm --filter tryless exec tsc --noEmit
