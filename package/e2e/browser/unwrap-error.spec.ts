@@ -19,7 +19,7 @@ describe('UnwrapError in Browser', () => {
   });
 
   it('should handle non-JSON-serializable reasons', () => {
-    const circular: any = { name: 'test' };
+    const circular: Record<string, unknown> = { name: 'test' };
     circular.self = circular;
 
     const result = err('CircularError', circular);

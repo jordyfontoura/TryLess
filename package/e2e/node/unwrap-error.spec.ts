@@ -33,7 +33,7 @@ describe('UnwrapError in Node.js', () => {
       result.unwrap();
     } catch (error) {
       if (error instanceof UnwrapError) {
-        const customInspect = (error as any)[
+        const customInspect = (error as Record<string, unknown>)[
           Symbol.for('nodejs.util.inspect.custom')
         ];
         expect(typeof customInspect).toBe('function');
@@ -42,7 +42,7 @@ describe('UnwrapError in Node.js', () => {
   });
 
   it('should handle circular references gracefully', () => {
-    const circular: any = { name: 'test' };
+    const circular: Record<string, unknown> = { name: 'test' };
     circular.self = circular;
 
     const result = err('CircularError', circular);
