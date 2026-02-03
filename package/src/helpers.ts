@@ -5,6 +5,36 @@ import { ok } from './result/functions';
 import type { IUnknownError } from './result/types';
 
 /**
+ * Type guard to check if a value is a PromiseLike object (thenable).
+ * Follows the Promise/A+ specification: checks if value is not null and has a then method.
+ *
+ * @template T - Type of the resolved value
+ * @param v - Value to check
+ * @returns True if the value is a PromiseLike object
+ *
+ * @example
+ * ```ts
+ * const promise = Promise.resolve(42);
+ * if (isThenable(promise)) {
+ *   // TypeScript knows promise is PromiseLike<number>
+ * }
+ *
+ * // Works with proxy promises too
+ * const proxyPromise = { then: (resolve) => resolve(42) };
+ * if (isThenable(proxyPromise)) {
+ *   // TypeScript knows proxyPromise is PromiseLike<number>
+ * }
+ * ```
+ */
+function isThenable<T = unknown>(v: unknown): v is PromiseLike<T> {
+  return (
+    v !== null &&
+    (typeof v === "object" || typeof v === "function") &&
+    typeof (v as any).then === "function"
+  );
+}
+
+/**
  * Creates a curried function that transforms data and wraps it in a success result.
  * Useful for promise chains and function composition.
  *
@@ -190,7 +220,7 @@ export function resultfy<F, E extends string>(
   fnError?: E
 ): any {
   const error = fnError ?? UnknownError;
-  if (fn instanceof Promise) {
+  if (isThenable(fn)) {
     return fn.then(ok, errReject(error));
   }
 
@@ -201,7 +231,7 @@ export function resultfy<F, E extends string>(
   return (function wrapper(...args: any) {
     try {
       const result = (fn as (...args: any[]) => any)(...args);
-      if (result instanceof Promise) {
+      if (isThenable(result)) {
         return result.then(ok, (reason) => new Err<string, unknown>(error, reason, wrapper));
       }
       return ok(result);

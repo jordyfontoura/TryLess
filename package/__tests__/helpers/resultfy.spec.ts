@@ -242,6 +242,117 @@ describe('resultfy', () => {
     });
   });
 
+  describe('PromiseLike support (proxy promises)', () => {
+    it('should wrap a PromiseLike object that resolves', async () => {
+      // Create a PromiseLike object that is not a native Promise
+      // This simulates a proxy promise or custom promise implementation
+      const promiseLike = {
+        then: (onFulfilled?: (value: number) => unknown) => {
+          if (onFulfilled) {
+            return Promise.resolve(onFulfilled(42));
+          }
+          return Promise.resolve(42);
+        },
+      };
+
+      const result = await resultfy(promiseLike);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBe(42);
+      }
+    });
+
+    it('should wrap a PromiseLike object that rejects', async () => {
+      const promiseLike = {
+        then: (
+          onFulfilled?: (value: number) => unknown,
+          onRejected?: (reason: string) => unknown
+        ) => {
+          if (onRejected) {
+            return Promise.resolve(onRejected('Rejection reason'));
+          }
+          return Promise.reject('Rejection reason');
+        },
+      };
+
+      const result = await resultfy(promiseLike);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('unknown');
+        expect(result.reason).toBe('Rejection reason');
+      }
+    });
+
+    it('should wrap a PromiseLike object with custom error', async () => {
+      const promiseLike = {
+        then: (
+          onFulfilled?: (value: number) => unknown,
+          onRejected?: (reason: string) => unknown
+        ) => {
+          if (onRejected) {
+            return Promise.resolve(onRejected('Rejection reason'));
+          }
+          return Promise.reject('Rejection reason');
+        },
+      };
+
+      const result = await resultfy(promiseLike, 'custom-error');
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('custom-error');
+        expect(result.reason).toBe('Rejection reason');
+      }
+    });
+
+    it('should handle PromiseLike returned from a function', async () => {
+      const createPromiseLike = (value: number) => ({
+        then: (onFulfilled?: (value: number) => unknown) => {
+          if (onFulfilled) {
+            return Promise.resolve(onFulfilled(value));
+          }
+          return Promise.resolve(value);
+        },
+      });
+
+      const safeCreatePromiseLike = resultfy(createPromiseLike);
+      const result = await safeCreatePromiseLike(100);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBe(100);
+      }
+    });
+
+    it('should handle PromiseLike that rejects from a function', async () => {
+      const createRejectingPromiseLike = () => ({
+        then: (
+          onFulfilled?: (value: number) => unknown,
+          onRejected?: (reason: string) => unknown
+        ) => {
+          if (onRejected) {
+            return Promise.resolve(onRejected('Function rejection'));
+          }
+          return Promise.reject('Function rejection');
+        },
+      });
+
+      const safeCreateRejectingPromiseLike = resultfy(
+        createRejectingPromiseLike,
+        'function-error'
+      );
+      const result = await safeCreateRejectingPromiseLike();
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('function-error');
+        expect(result.reason).toBe('Function rejection');
+      }
+    });
+  });
+
   describe('function parameters preservation', () => {
     it('should preserve function parameters', () => {
       const multiply = (a: number, b: number, c: number) => a * b * c;
