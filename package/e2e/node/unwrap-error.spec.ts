@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { err, UnwrapError } from '../../dist/index.esm.js';
+import { err, UnwrapError } from '../../dist/index.mjs';
 import { inspect } from 'util';
 
 /**

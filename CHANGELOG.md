@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.8] - 2025-02-13
+
+### Fixed
+- Fixed ESM module compatibility issue with ESM loaders/runtimes like `tsx` by changing ESM output extension from `.js` to `.mjs`
+- Updated Rollup config to generate `dist/index.mjs` instead of `dist/index.esm.js` to ensure proper ESM resolution
+- Updated `package.json` exports to use `.mjs` extension for ESM imports, resolving "does not provide an export named 'err'" errors
+- The `.mjs` extension is always treated as ESM by Node.js regardless of `package.json` `type` field, eliminating ambiguity
+- This fix ensures compatibility with tools like `tsx`, `ts-node` with ESM loader, and other ESM loaders without requiring `"type": "module"` in package.json
+
 ## [1.5.7] - 2025-02-13
 
 ### Fixed
@@ -95,7 +104,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Examples for common use cases
 - Integration examples with Zod validation
 
-[Unreleased]: https://github.com/jordyfontoura/tryless/compare/v1.5.7...HEAD
+[Unreleased]: https://github.com/jordyfontoura/tryless/compare/v1.5.8...HEAD
+[1.5.8]: https://github.com/jordyfontoura/tryless/compare/v1.5.7...v1.5.8
 [1.5.7]: https://github.com/jordyfontoura/tryless/compare/v1.5.6...v1.5.7
 [1.5.6]: https://github.com/jordyfontoura/tryless/compare/v1.5.5...v1.5.6
 [1.5.5]: https://github.com/jordyfontoura/tryless/compare/v1.5.4...v1.5.5

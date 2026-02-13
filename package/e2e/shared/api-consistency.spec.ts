@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ok, err } from '../../dist/index.esm.js';
+import { ok, err } from '../../dist/index.mjs';
 
 /**
  * Tests to ensure API consistency across Node.js and Browser environments
