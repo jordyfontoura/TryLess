@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { err, UnwrapError } from '../../dist/index.esm.js';
+import { err, UnwrapError } from '../../dist/index.mjs';
 
 /**
  * Tests for UnwrapError in browser environment
@@ -19,7 +19,7 @@ describe('UnwrapError in Browser', () => {
   });
 
   it('should handle non-JSON-serializable reasons', () => {
-    const circular: any = { name: 'test' };
+    const circular: Record<string, unknown> = { name: 'test' };
     circular.self = circular;
 
     const result = err('CircularError', circular);

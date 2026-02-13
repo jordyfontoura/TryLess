@@ -39,15 +39,19 @@ async function fetchUser(id: string) {
 
 **After (clean & type-safe):**
 ```typescript
-import { ok, err, errReject } from 'tryless';
+import { ok, err, resultfy } from 'tryless';
 
 async function fetchUser(id: string) {
-  const responseResult = await fetch(`/api/users/${id}`)
-    .then(ok, errReject('fetch-failed'));
+  const responseResult = await resultfy(
+    fetch(`/api/users/${id}`),
+    'fetch-failed'
+  );
   if (!responseResult.success) return responseResult;
 
-  const jsonResult = await responseResult.data.json()
-    .then(ok, errReject('invalid-json'));
+  const jsonResult = await resultfy(
+    responseResult.data.json(),
+    'invalid-json'
+  );
   if (!jsonResult.success) return jsonResult;
 
   const userResult = userSchema.safeParse(jsonResult.data);
@@ -106,12 +110,14 @@ if (result.success) {
 ### With Promises
 
 ```typescript
-import { ok, errReject } from 'tryless';
+import { resultfy } from 'tryless';
 
 async function getUser(id: string) {
   // Convert promise rejection to error result
-  const result = await fetch(`/api/users/${id}`)
-    .then(ok, errReject('user-fetch-failed'));
+  const result = await resultfy(
+    fetch(`/api/users/${id}`),
+    'user-fetch-failed'
+  );
     
   if (!result.success) {
     return result; // { success: false, error: 'user-fetch-failed', reason: ... }
@@ -188,10 +194,21 @@ if (result.success) {
 
 ### resultfy
 
-Wrap functions or promises to always return Results instead of throwing:
+**Recommended approach** for wrapping promises and functions to always return Results instead of throwing:
 
 ```typescript
 import { resultfy } from 'tryless';
+
+// Wrap a promise with custom error message (most common use case)
+const userResult = await resultfy(
+  fetch('/api/user').then(r => r.json()),
+  'fetch-error'
+);
+
+if (!userResult.success) {
+  console.log(userResult.error); // 'fetch-error'
+  console.log(userResult.reason); // Original error details
+}
 
 // Wrap a function
 const safeDivide = resultfy((a: number, b: number) => {
@@ -204,37 +221,29 @@ const result = safeDivide(10, 2);
 
 const errorResult = safeDivide(10, 0);
 // { success: false, error: 'unknown', reason: Error('Division by zero') }
-
-// Wrap a promise
-const safeUser = await resultfy(
-  fetch('/api/user').then(r => r.json())
-);
 ```
 
-With custom error messages:
-
-```typescript
-const safeFetch = resultfy(
-  fetch('/api/data').then(r => r.json()),
-  'fetch-error'
-);
-
-if (!safeFetch.success) {
-  console.log(safeFetch.error); // 'fetch-error'
-}
-```
+**Why prefer `resultfy` over `.then(ok, errReject())`?**
+- ✅ More concise and readable
+- ✅ Works with any promise or function
+- ✅ Custom error messages built-in
+- ✅ Consistent API
 
 ### errReject
 
 Perfect for promise chains - converts rejections to error results:
 
 ```typescript
-import { ok, errReject } from 'tryless';
+import { ok, errReject, resultfy } from 'tryless';
 
+// Still useful for complex promise chains
 const result = await fetch('/api/data')
   .then(ok, errReject('network-error'))
   .then(res => res.success ? res.data.json() : res)
   .then(ok, errReject('parse-error'));
+
+// Or use resultfy for simpler cases
+const result = await resultfy(fetch('/api/data'), 'network-error');
 ```
 
 ### okFulfilled
@@ -305,7 +314,7 @@ const value = getPrice(item).unwrapOrElse(error => {
 ### API Request with Validation
 
 ```typescript
-import { ok, err, errReject } from 'tryless';
+import { ok, err, resultfy } from 'tryless';
 import { z } from 'zod';
 
 const userSchema = z.object({
@@ -316,8 +325,10 @@ const userSchema = z.object({
 
 async function fetchAndValidateUser(id: string) {
   // Fetch data
-  const fetchResult = await fetch(`/api/users/${id}`)
-    .then(ok, errReject('network-error'));
+  const fetchResult = await resultfy(
+    fetch(`/api/users/${id}`),
+    'network-error'
+  );
   if (!fetchResult.success) return fetchResult;
 
   // Check response status
@@ -327,8 +338,10 @@ async function fetchAndValidateUser(id: string) {
   }
 
   // Parse JSON
-  const jsonResult = await response.json()
-    .then(ok, errReject('json-parse-error'));
+  const jsonResult = await resultfy(
+    response.json(),
+    'json-parse-error'
+  );
   if (!jsonResult.success) return jsonResult;
 
   // Validate schema
@@ -390,11 +403,13 @@ async function createUser(data: UserInput) {
 
 ```typescript
 import { readFile } from 'fs/promises';
-import { ok, errReject } from 'tryless';
+import { ok, err, resultfy } from 'tryless';
 
 async function loadConfig(path: string) {
-  const fileResult = await readFile(path, 'utf-8')
-    .then(ok, errReject('file-read-error'));
+  const fileResult = await resultfy(
+    readFile(path, 'utf-8'),
+    'file-read-error'
+  );
   if (!fileResult.success) return fileResult;
 
   try {
@@ -438,10 +453,13 @@ resultfy(promise, 'custom-error')
 ```
 
 #### `errReject(error)`
-Converts promise rejections to Err results.
+Converts promise rejections to Err results. Useful for complex promise chains.
 
 ```typescript
 promise.then(ok, errReject('fetch-failed'))
+
+// For simpler cases, prefer resultfy:
+resultfy(promise, 'fetch-failed')
 ```
 
 #### `okFulfilled(mapFn)`

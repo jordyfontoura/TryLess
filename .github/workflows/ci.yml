@@ -11,12 +11,68 @@ on:
       - dev
 
 jobs:
-  test:
+  # Validações rápidas primeiro
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linter
+        run: pnpm --filter tryless lint
+
+  # Verificação de tipos
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check types
+        run: pnpm --filter tryless exec tsc --noEmit
+
+  # Build e testes em múltiplas versões do Node
+  test:
+    name: Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [22]
+        node-version: [20, 22]
 
     steps:
       - name: Checkout repository
@@ -36,15 +92,54 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run linter
-        run: pnpm --filter tryless lint
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(pnpm --filter tryless list @playwright/test --depth=0 --json | jq -r '.[0].version')" >> $GITHUB_OUTPUT
 
-      - name: Run tests
-        run: pnpm --filter tryless test
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter tryless exec playwright install --with-deps chromium
+
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter tryless exec playwright install-deps chromium
 
       - name: Build package
         run: pnpm --filter tryless build
 
-      - name: Check types
-        run: pnpm --filter tryless exec tsc --noEmit
+      - name: Run tests
+        run: pnpm --filter tryless test
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-node-${{ matrix.node-version }}
+          path: package/test-results/
+          retention-days: 7
+
+  # Job final que depende de todos os outros
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test]
+    if: always()
+
+    steps:
+      - name: Check all jobs
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" ]] || \
+             [[ "${{ needs.typecheck.result }}" != "success" ]] || \
+             [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo "One or more jobs failed"
+            exit 1
+          fi
+          echo "All jobs passed successfully!"
 

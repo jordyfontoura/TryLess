@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ok, err } from '../../dist/index.esm.js';
+import { ok, err } from '../../dist/index.mjs';
 
 /**
  * Tests to ensure API consistency across Node.js and Browser environments
@@ -122,7 +122,7 @@ describe('Result methods consistency', () => {
 
     it('should pass through Err values', () => {
       const result = err('TestError', 'Test reason');
-      const mapped = result.andThen((data) => ok((data as any) * 2));
+      const mapped = result.andThen((data) => ok((data as unknown) * 2));
 
       expect(mapped.success).toBe(false);
       if (!mapped.success) {
